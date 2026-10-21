@@ -1,6 +1,6 @@
 """Parsed on-chain activity for a Solana wallet: swaps, transfers, Fomo co-signer detection, linked wallets, PnL.
 Everything is derived from public RPC data; results are capped + cached and labeled partial where the cap bites."""
-import asyncio, os, time, collections, aiohttp
+import asyncio, os, re, time, collections, aiohttp
 RPCS = [os.environ.get("SOLANA_RPC_URL", "https://solana-rpc.publicnode.com"), os.environ.get("SOLANA_ARCHIVE_RPC_URL", "https://api.mainnet-beta.solana.com")]
 WSOL = "So11111111111111111111111111111111111111112"
 USDC = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
@@ -19,6 +19,10 @@ FOMO_SIGNERS = {"AgmLJBMDCqWynYnQiPCuj9ewsNNsBJXyzoUhD9LJzN51": "Fomo fee payer 
 FOMO_INFRA = {"7uTT8Xi5RWXzy7h9XL244GRgEycDYDhLjr3ZyNdXi8pZ": "Fomo-side collection account (inferred)"}
 RELAYERS = set(FOMO_SIGNERS) | {"HckQ93Xqjjo8mwt5pNPWvyCTZXQZ858rvzmm7ZRrZg9t", "FHpcNSe6tb2n15bAdq4BkeYWGyZKFD7yLYrH92ng7wCT",
                                  "gasBidSWW5zmwXs3gn8TG2ijzKkrwpyM7ucwjgDQst6"}
+# Casino / CEX payout wallets are not owners. visitflipgg.sol (Flip.gg) resolves to this address.
+PAYOUT_WALLETS = {"BmFdpraQhkiDQE6SnfG5omcA1VwzqfXrwtNYBwWTymy6": "Flip.gg payout (visitflipgg.sol)"}
+INFRA = set(RELAYERS) | set(FOMO_INFRA) | set(FOMO_SIGNERS) | set(PAYOUT_WALLETS)
+PAYOUT_RE = re.compile(r"visitflipgg|flip\.?gg|binance|coinbase|kraken|bybit|\bokx\b|kucoin|crypto\.com|rollbit|roobet|stake\.com|bc\.game", re.I)
 TX_CAP = int(os.environ.get("ACTIVITY_TX_CAP", "250"))
 _cache = {}
 
@@ -172,9 +176,161 @@ def pnl(rows, sol_usd, complete, oldest_ts):
                      "partial": (not complete) and (oldest_ts or now) > start}
     return out
 
+def _agg(rows, skip):
+    """Counterparties with counts and the largest inbound SOL transfer (the funding evidence tx)."""
+    out = {}
+    for r in rows:
+        for t in r["transfers"]:
+            c = t["counterparty"]
+            if not c or c in skip: continue
+            a = out.setdefault(c, {"wallet": c, "in": 0, "out": 0, "sol_in": 0.0, "sol_out": 0.0,
+                                   "fund_sol": 0.0, "fund_tx": None, "example_tx": r["sig"]})
+            a[t["dir"]] += 1
+            if t["mint"] == WSOL:
+                a["sol_" + t["dir"]] += t["amount"]
+                if t["dir"] == "in" and t["amount"] >= a["fund_sol"]:
+                    a["fund_sol"], a["fund_tx"] = t["amount"], r["sig"]
+            if not a["example_tx"]: a["example_tx"] = r["sig"]
+    return out
+
+def _fomo_touch(rows):
+    """Did this wallet send to the inferred Fomo collection account, or get a Fomo fee-payer co-sign?"""
+    hit = None
+    for r in rows:
+        for t in r["transfers"]:
+            if t["counterparty"] in FOMO_INFRA and t["dir"] == "out" and t["mint"] == WSOL and t["amount"] >= 0.05:
+                if not hit or t["amount"] > hit["sol"]:
+                    hit = {"sol": t["amount"], "tx": r["sig"]}
+    fee = fomo_check(rows)
+    return hit, bool(fee.get("verified"))
+
+def _score(sol_in, n_in, n_out, fomo_sol, fomo_fee, hop):
+    score, parts = 0, []
+    if hop == 1 and sol_in >= 1:
+        score += 50
+        parts.append(f"Sent {sol_in:.2f} SOL to this wallet. Funding it is a strong signal.")
+    elif hop == 1 and sol_in >= 0.1:
+        score += 25
+        parts.append(f"Sent {sol_in:.2f} SOL to this wallet.")
+    if hop == 1 and n_in >= 1 and n_out >= 1 and n_in + n_out >= 3:
+        score += 30
+        parts.append(f"Transfers run both ways ({n_in} in, {n_out} out). Repeated two-way transfers are a medium signal.")
+    elif hop == 1 and n_in >= 1 and n_out >= 1:
+        score += 15
+        parts.append(f"They both sent and received ({n_in} in, {n_out} out).")
+    if hop == 1 and n_in + n_out <= 1 and sol_in < 0.1:
+        score += 5
+        parts.append("The only connection is a one-off transfer, which is a weak signal.")
+    if fomo_sol:
+        score += 20
+        parts.append(f"They also send {fomo_sol:.2f} SOL to the same inferred Fomo collection account this wallet uses, which adds weight.")
+    elif fomo_fee:
+        score += 10
+        parts.append("The Fomo fee payer co-signed at least one of their recent transactions, which adds weight.")
+    if score >= 70 and hop == 1: conf = "High"
+    elif score >= 35: conf = "Medium"
+    else: conf = "Low"
+    if hop == 2 and conf == "High": conf = "Medium"
+    return score, conf, parts
+
+async def _who(s, w):
+    import identity
+    p, sns, kol = await asyncio.gather(
+        identity._get(s, f"{identity.PUMP}/users/{w}"),
+        identity.sns_section(s, w),
+        identity.kolscan_section(s, w))
+    p = p if isinstance(p, dict) else {}
+    domains = [d for d in (sns.get("domains") or []) if d]
+    if sns.get("primary") and sns["primary"] not in domains: domains.insert(0, sns["primary"])
+    ident = {"username": p.get("username") or None, "x": p.get("x_username") or None,
+             "domains": domains, "kol": kol.get("name") if kol.get("is_kol") else None,
+             "kol_link": kol.get("link") if kol.get("is_kol") else None,
+             "pump_link": f"https://pump.fun/profile/{w}" if p.get("username") else None,
+             "x_link": f"https://x.com/{p['x_username']}" if p.get("x_username") else None}
+    blob = " ".join([ident["username"] or "", ident["x"] or "", ident["kol"] or ""] + domains)
+    ident["payout"] = bool(PAYOUT_RE.search(blob))
+    ident["has"] = bool(ident["username"] or ident["x"] or domains or ident["kol"])
+    return ident
+
+async def possible_owners(s, w):
+    """Unconfirmed owner hunches from funders and counterparties, one or two hops. Never a confirmed match."""
+    import identity
+    me = await _who(s, w)
+    if me["has"]:
+        return {"shown": False, "candidates": [], "reason": "This wallet already has a public profile, X handle, or .sol name."}
+    fetched = await fetch(s, w)
+    direct = _agg(fetched["rows"], INFRA | {w})
+    funders = [c for c, a in sorted(direct.items(), key=lambda kv: -kv[1]["sol_in"]) if a["sol_in"] >= 0.5][:3]
+    subs = await asyncio.gather(*[fetch(s, c, n=40) for c in funders]) if funders else []
+    fomo_for, fee_for, hop2 = {}, {}, []
+    for c, sub in zip(funders, subs):
+        touch, fee = _fomo_touch(sub["rows"])
+        if touch: fomo_for[c] = touch
+        if fee: fee_for[c] = True
+        via = direct[c]
+        for o, b in _agg(sub["rows"], INFRA | {w, c}).items():
+            if b["sol_in"] < 0.5 and not (b["in"] >= 1 and b["out"] >= 1 and b["in"] + b["out"] >= 3): continue
+            hop2.append((o, b, c, via))
+    # Identity on the closest counterparties, plus a couple of second-hop wallets behind funders that may themselves be unnamed.
+    want = [c for c, a in sorted(direct.items(), key=lambda kv: -(kv[1]["sol_in"] * 10 + kv[1]["in"] + kv[1]["out"]))][:6]
+    extra = []
+    for o, b, c, via in sorted(hop2, key=lambda t: -t[1]["sol_in"]):
+        if o in direct or o in extra: continue
+        extra.append(o)
+        if len(extra) >= 3: break
+    idents = await asyncio.gather(*[_who(s, c) for c in want + extra])
+    named = dict(zip(want + extra, idents))
+    leads = []
+    for c in want:
+        ident = named[c]
+        if not ident["has"] or ident["payout"] or c in INFRA: continue
+        a = direct[c]
+        touch = fomo_for.get(c)
+        score, conf, parts = _score(a["sol_in"], a["in"], a["out"], touch["sol"] if touch else None, bool(fee_for.get(c)), 1)
+        if not parts: continue
+        leads.append(_lead(c, ident, a, score, conf, parts, 1, None, touch))
+    for o, b, c, via in hop2:
+        ident = named.get(o)
+        if not ident or not ident["has"] or ident["payout"] or o in INFRA: continue
+        if named.get(c, {}).get("has"): continue  # the closer wallet already carries an identity
+        via_ident = named.get(c) or {}
+        via_name = via_ident.get("username") or (via["wallet"][:4] + "…" + via["wallet"][-4:])
+        score, conf, parts = _score(0, 0, 0, None, False, 2)
+        score += 25 if b["sol_in"] >= 1 else 15
+        conf = "Medium" if score >= 35 else "Low"
+        parts.insert(0, f"They did not pay this wallet directly. They sent {b['sol_in']:.2f} SOL to {via_name}, who sent {via['sol_in']:.2f} SOL here. That extra hop is a weaker signal.")
+        leads.append(_lead(o, ident, b, score, conf, parts, 2, via, None))
+    leads.sort(key=lambda L: (-L["score"], -L["sol_in"]))
+    strong = [L for L in leads if L["score"] >= 25]
+    show = (strong or leads)[:3]
+    return {"shown": True, "candidates": show, "checked_counterparties": len(direct),
+            "txs_parsed": len(fetched["rows"]),
+            "method": "Unconfirmed hunches only, ranked from public transfers. Funding this wallet is strong, repeated two-way transfers are medium, a one-off transfer is weak. Sending to the same Fomo collection account adds weight. The Fomo fee payer, the Fomo collection account, relayers, gas sponsors, and known casino payouts such as Flip.gg (visitflipgg.sol) are excluded."}
+
+def _lead(wallet, ident, stats, score, conf, parts, hop, via, touch):
+    title = ident["username"] or (ident["x"] and "@" + ident["x"]) or (ident["domains"][0] if ident["domains"] else None) or ident["kol"] or wallet[:4] + "…" + wallet[-4:]
+    tx = stats.get("fund_tx") or stats.get("example_tx")
+    parts.append("This is an unconfirmed lead, not a verified owner.")
+    out = {"wallet": wallet, "title": title, "hop": hop, "confidence": conf, "score": score,
+           "label": "Unconfirmed lead / hunch", "reason": " ".join(parts),
+           "sol_in": round(stats.get("sol_in") or stats.get("fund_sol") or 0, 3),
+           "tx_link": f"https://solscan.io/tx/{tx}" if tx else None,
+           "wallet_link": f"https://solscan.io/account/{wallet}",
+           "pump": {"username": ident["username"], "link": ident["pump_link"]} if ident.get("pump_link") else None,
+           "x": {"handle": ident["x"], "link": ident["x_link"]} if ident.get("x_link") else None,
+           "domains": [{"name": d, "link": f"https://www.sns.id/domain/{d[:-4]}"} for d in ident["domains"]],
+           "kol": {"name": ident["kol"], "link": ident["kol_link"]} if ident.get("kol") else None}
+    if via: out["via"] = via["wallet"]
+    if touch: out["fomo_tx_link"] = f"https://solscan.io/tx/{touch['tx']}"
+    return out
+
 async def activity(w, kind="all", limit=50, before=None):
-    async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=60), headers={"User-Agent": "Mozilla/5.0"}) as s:
+    timeout = 90 if kind == "owner" else 60
+    async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=timeout), headers={"User-Agent": "Mozilla/5.0"}) as s:
         res = {"wallet": w}
+        if kind == "owner":
+            res["owner"] = await possible_owners(s, w)
+            return res
         if kind in ("all", "tx", "transfers", "pnl", "linked", "fomo"):
             f = await fetch(s, w)
             rows = sorted(f["rows"], key=lambda r: -(r["ts"] or 0))

@@ -44,7 +44,7 @@ async def lookup(q: str, request: Request):
 
 _act_hits = defaultdict(deque)
 ACT_RATE = int(os.environ.get("ACTIVITY_RATE_PER_MIN", "6"))
-TYPES = {"tx", "transfers", "callouts", "theses", "pnl", "linked"}
+TYPES = {"tx", "transfers", "callouts", "theses", "pnl", "linked", "owner"}
 
 @app.get("/api/activity")
 async def api_activity(q: str, request: Request, type: str = "tx", limit: int = 50, before: float | None = None):
