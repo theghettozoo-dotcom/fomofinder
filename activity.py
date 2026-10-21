@@ -258,11 +258,14 @@ async def _who(s, w):
     p = p if isinstance(p, dict) else {}
     domains = [d for d in (sns.get("domains") or []) if d]
     if sns.get("primary") and sns["primary"] not in domains: domains.insert(0, sns["primary"])
-    ident = {"username": p.get("username") or None, "x": p.get("x_username") or None,
+    bio_x = identity.handles_from_text(p.get("bio"))
+    xh = p.get("x_username") or (bio_x[0] if bio_x else None)
+    ident = {"username": p.get("username") or None, "x": xh,
              "domains": domains, "kol": kol.get("name") if kol.get("is_kol") else None,
              "kol_link": kol.get("link") if kol.get("is_kol") else None,
              "pump_link": f"https://pump.fun/profile/{w}" if p.get("username") else None,
-             "x_link": f"https://x.com/{p['x_username']}" if p.get("x_username") else None}
+             "x_link": f"https://x.com/{xh}" if xh else None,
+             "x_source": "pump.fun profile" if p.get("x_username") else ("pump.fun bio" if bio_x else None)}
     blob = " ".join([ident["username"] or "", ident["x"] or "", ident["kol"] or ""] + domains)
     ident["payout"] = bool(PAYOUT_RE.search(blob))
     ident["has"] = bool(ident["username"] or ident["x"] or domains or ident["kol"])
@@ -465,7 +468,7 @@ def _lead(wallet, ident, stats, score, conf, parts, hop, via, touch, evidence=No
            "tx_link": f"https://solscan.io/tx/{tx}" if tx else None,
            "wallet_link": f"https://solscan.io/account/{wallet}",
            "pump": {"username": ident["username"], "link": ident["pump_link"]} if ident.get("pump_link") else None,
-           "x": {"handle": ident["x"], "link": ident["x_link"]} if ident.get("x_link") else None,
+           "x": {"handle": ident["x"], "link": ident["x_link"], "source": ident.get("x_source")} if ident.get("x_link") else None,
            "domains": [{"name": d, "link": f"https://www.sns.id/domain/{d[:-4]}"} for d in ident["domains"]],
            "kol": {"name": ident["kol"], "link": ident["kol_link"]} if ident.get("kol") else None}
     if via: out["via"] = via["wallet"]
@@ -597,9 +600,24 @@ async def activity(w, kind="all", limit=50, before=None):
         res = {"wallet": w}
         if kind == "owner":
             res["owner"] = await possible_owners(s, w)
+            import identity as _id
+            for c in (res["owner"].get("candidates") or [])[:3]:
+                try: c["x_profile"] = await _id.x_accounts(s, c["wallet"])
+                except Exception: c["x_profile"] = None
+                xp = c.get("x_profile") or {}
+                if xp.get("handle"):
+                    c["x"] = {"handle": xp["handle"], "link": xp.get("link"), "source": xp.get("source")}
+                h = ((c.get("pump") or {}).get("username"))
+                if not h: continue
+                try: c["x_match"] = await _id.x_matches_for(s, c["wallet"], h, "funder", "pump.fun username")
+                except Exception: c["x_match"] = None
             return res
         if kind == "nfts":
             res["nfts"] = await nft_holdings(s, w)
+            return res
+        if kind == "xmatch":
+            import identity as _id
+            res["xmatch"] = await _id.x_name_report(s, w)
             return res
         if kind in ("all", "tx", "transfers", "pnl", "linked", "fomo"):
             f = await fetch(s, w)
