@@ -169,17 +169,41 @@ def links(w, pump_user=None, x=None):
     if x: L["X"] = f"https://x.com/{x}"
     return L
 
+async def enrich_linked(items):
+    """Light identity tags for linked wallets (pump.fun profile/X, .sol, KOLscan). Max 6, sequential to stay rate-limit friendly."""
+    async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=20)) as s:
+        for a in items[:6]:
+            p = await _get(s, f"{PUMP}/users/{a['wallet']}")
+            p = p if isinstance(p, dict) else {}
+            sns = await sns_section(s, a["wallet"]); k = await kolscan_section(s, a["wallet"])
+            tags = []
+            if p.get("x_username"): tags.append({"label": "X @" + p["x_username"], "link": f"https://x.com/{p['x_username']}", "strength": "strong (self-linked on pump.fun)"})
+            if p.get("username") and (p.get("followers") or 0) >= 20: tags.append({"label": "pump.fun " + p["username"], "link": f"https://pump.fun/profile/{a['wallet']}", "strength": "medium" if not re.match(r"^[a-z]+\d{3,6}$|^[A-Z][a-z]+[A-Z][a-z]+[A-Z][a-z]+$", p["username"]) else "weak (auto-generated name)"})
+            for d in sns.get("domains") or []: tags.append({"label": d, "link": f"https://www.sns.id/domain/{d[:-4]}", "strength": "strong (owner-registered)"})
+            if k.get("is_kol"): tags.append({"label": "KOL " + (k.get("name") or ""), "link": k.get("link"), "strength": "strong"})
+            a["identity"] = tags
+    return items
+
 async def lookup(q):
     async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=25)) as s:
         w, prof = await resolve_input(s, q)
         if not w: return {"error": f"not a Solana wallet or pump.fun user: {q}"}
         pump, sns, hold, hist = await asyncio.gather(pump_section(s, w, prof), sns_section(s, w), holdings_section(s, w), history_section(s, w))
         handle = (pump or {}).get("x_username")
-        x, kol = await asyncio.gather(x_section(s, handle, w), kolscan_section(s, w, handle))
+        import activity
+        async def fomo_onchain():
+            try: return activity.fomo_check((await activity.fetch(s, w, n=int(os.environ.get("FOMO_CHECK_TXS", "40"))))["rows"])
+            except Exception as e: return {"verified": False, "error": str(e)}
+        x, kol, fchk = await asyncio.gather(x_section(s, handle, w), kolscan_section(s, w, handle), fomo_onchain())
         guess = (pump or {}).get("username")
-        fomo = {"verified": False, "source": None,
+        fomo = {"verified": False, "source": None, "onchain": fchk,
                 "note": "fomo.family's API (prod-api.fomo.family) requires login; no public wallet→profile mapping exists",
                 "guess_link": guess and f"https://fomo.family/profile/{guess}", "guess_label": "unverified guess (same handle as pump.fun)"}
+        if fchk.get("verified"):
+            fomo.update(verified=True, source="on-chain: tx co-signed by Fomo fee payer",
+                        evidence=f"{fchk['hits']} of the last {fchk['checked_txs']} txs co-signed by Fomo fee payer {fchk['signer']}",
+                        example_link=fchk["example_link"], signer_link=fchk["signer_link"],
+                        note="Fomo username isn't public (Fomo's API needs login); handle link below is still a guess.")
         out = {"wallet": w, "fetched_at": int(time.time()), "pump": pump, "x": x, "domains": sns, "holdings": hold, "history": hist,
                 "fomo": fomo, "labels": {"known_label": None, "note": "no free keyless wallet-label source (Solscan/Arkham labels need an API key or login)"},
                 "links": links(w, guess, handle), "kolscan": kol,
@@ -189,7 +213,7 @@ async def lookup(q):
         res = out
         res["found_on"] = [n for n, ok in (("pump.fun", bool(pump and pump.get("username"))), ("X", bool(handle)), ("SNS .sol", bool(sns.get("domains"))),
                            ("KOLscan", kol.get("is_kol")), ("KOLscan (same X handle)", bool(kol.get("same_x_handle_kol_wallets"))),
-                           ("X mentions", bool(x.get("mentions"))), ("Fomo (unverified)", bool(guess))) if ok]
+                           ("X mentions", bool(x.get("mentions"))), ("Fomo ✅ (on-chain)", fomo["verified"]), ("Fomo (unverified)", bool(guess) and not fomo["verified"])) if ok]
         return res
 
 def _ago(ts):
@@ -231,7 +255,8 @@ def to_html(r):
         if hi.get("funded_by"): L.append(f"Funded by <a href=\"{hi['funded_by_link']}\">{hi['funded_by'][:6]}…</a> ({hi['funded_sol']:.3f} SOL)")
     elif hi.get("tx_count_min"): L.append(f"\n<b>Age</b>: older than {_ago(hi.get('oldest_seen'))} (&gt;{hi['tx_count_min']:,} txs)")
     f = r["fomo"]
-    if f.get("guess_link"): L.append(f"\n<b>Fomo</b>: <a href=\"{f['guess_link']}\">{f['guess_link'].split('/')[-1]}</a> ⚠️ unverified guess")
+    if f.get("verified"): L.append(f"\n<b>Fomo</b>: ✅ verified on-chain – <a href=\"{f['example_link']}\">tx co-signed by Fomo fee payer</a>")
+    elif f.get("guess_link"): L.append(f"\n<b>Fomo</b>: <a href=\"{f['guess_link']}\">{f['guess_link'].split('/')[-1]}</a> ⚠️ unverified guess")
     L.append("\n" + " | ".join(f'<a href="{u}">{k}</a>' for k, u in r["links"].items()))
     return "\n".join(L)
 

@@ -5,7 +5,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # identity.py sh
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-import identity
+import identity, activity, aiohttp
 mimetypes.add_type("image/webp", ".webp")
 app = FastAPI(title="FomoFinder", docs_url=None, redoc_url=None, openapi_url=None)
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -40,4 +40,28 @@ async def lookup(q: str, request: Request):
     if r.get("error"): return JSONResponse(r, status_code=404)
     _cache[q] = (now, r)
     if len(_cache) > 500: _cache.pop(next(iter(_cache)))
+    return r
+
+_act_hits = defaultdict(deque)
+ACT_RATE = int(os.environ.get("ACTIVITY_RATE_PER_MIN", "6"))
+TYPES = {"tx", "transfers", "callouts", "theses", "pnl", "linked"}
+
+@app.get("/api/activity")
+async def api_activity(q: str, request: Request, type: str = "tx", limit: int = 50, before: float | None = None):
+    q = q.strip()
+    if type not in TYPES or len(q) > 120 or not (SOL.match(q) or USER.match(q) or PUMP_URL.match(q)):
+        return JSONResponse({"error": "bad request"}, status_code=400)
+    limit = max(1, min(limit, 100))
+    key = (q, type, limit, before); now = time.time()
+    if key in _cache and now - _cache[key][0] < 300: return _cache[key][1]
+    dq = _act_hits[client_ip(request)]
+    while dq and now - dq[0] > 60: dq.popleft()
+    if len(dq) >= ACT_RATE * 4: return JSONResponse({"error": "Too many requests, wait a minute."}, status_code=429)
+    dq.append(now)
+    async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=15)) as s:
+        w, _ = await identity.resolve_input(s, q)
+    if not w: return JSONResponse({"error": "unknown wallet"}, status_code=404)
+    r = await activity.activity(w, type, limit, before)
+    if type == "linked": r["linked"] = await identity.enrich_linked(r.get("linked") or [])
+    _cache[key] = (now, r)
     return r
