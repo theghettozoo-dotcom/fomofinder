@@ -17,6 +17,7 @@ SWAP_PROGRAMS = {"DF1ow4tspfHX9JwWJsAb9epbkA8hmpSEAtxXy1V27QBH": "DFlow", "JUP6L
 FOMO_SIGNERS = {"AgmLJBMDCqWynYnQiPCuj9ewsNNsBJXyzoUhD9LJzN51": "Fomo fee payer / co-signer"}
 # Inferred Fomo infrastructure: receives USDC from many different wallets in txs paid by the Fomo fee payer (44/60 sampled).
 FOMO_INFRA = {"7uTT8Xi5RWXzy7h9XL244GRgEycDYDhLjr3ZyNdXi8pZ": "Fomo-side collection account (inferred)"}
+# Mass-distributor fee payers are not owners. HckQ93… is the pump.fun DistributeFeeToHolders payer.
 RELAYERS = set(FOMO_SIGNERS) | {"HckQ93Xqjjo8mwt5pNPWvyCTZXQZ858rvzmm7ZRrZg9t", "FHpcNSe6tb2n15bAdq4BkeYWGyZKFD7yLYrH92ng7wCT",
                                  "gasBidSWW5zmwXs3gn8TG2ijzKkrwpyM7ucwjgDQst6"}
 # Casino / CEX payout wallets are not owners. visitflipgg.sol (Flip.gg) resolves to this address.
@@ -115,16 +116,31 @@ def parse(t, w, sig):
             ta = inf.get("tokenAmount") or {}
             amt = float(ta.get("uiAmount") or 0)
             mint = mint or inf.get("mint")
-        if src == w and dst and dst != w: transfers.append({"dir": "out", "counterparty": dst, "mint": mint, "amount": amt})
-        elif dst == w and src and src != w: transfers.append({"dir": "in", "counterparty": src, "mint": mint, "amount": amt})
+        cp = dst if src == w else src
+        cp_pre = cp_post = None
+        if mint == WSOL and cp in keys:
+            j = keys.index(cp)
+            cp_pre, cp_post = meta["preBalances"][j] / 1e9, meta["postBalances"][j] / 1e9
+        if src == w and dst and dst != w: transfers.append({"dir": "out", "counterparty": dst, "mint": mint, "amount": amt, "cp_pre": cp_pre, "cp_post": cp_post})
+        elif dst == w and src and src != w: transfers.append({"dir": "in", "counterparty": src, "mint": mint, "amount": amt, "cp_pre": cp_pre, "cp_post": cp_post})
     venue = next((SWAP_PROGRAMS[p] for p in progs if p in SWAP_PROGRAMS), None)
     swap = None
     if len(deltas) == 1 and (abs(sol) > 1e-6 or abs(usd_stable) > 1e-6):
         mint, d = next(iter(deltas.items()))
         if (d > 0 and (sol < 0 or usd_stable < 0)) or (d < 0 and (sol > 0 or usd_stable > 0)):
             swap = {"side": "buy" if d > 0 else "sell", "mint": mint, "amount": abs(d), "sol": abs(sol), "usdc": abs(usd_stable), "venue": venue}
+    logs = meta.get("logMessages") or []
+    fee_dist = any("DistributeFee" in (line or "") for line in logs)
+    recipients = set()
+    for ins in list(m["instructions"]) + inner:
+        p = ins.get("parsed")
+        if not isinstance(p, dict) or p.get("type") not in ("transfer", "transferChecked") or ins.get("program") == "system": continue
+        owner = owners.get((p.get("info") or {}).get("destination"), (None,))[0]
+        if owner and owner != keys[0]: recipients.add(owner)
+    # A sole signer paying a fee distribution out to many holders is infrastructure, not a person funding the wallet.
+    mass = keys[0] if keys and keys[0] != w and len(signers) == 1 and (fee_dist or len(recipients) >= 5) else None
     return {"sig": sig, "ts": t.get("blockTime"), "fee_payer": keys[0], "signers": signers, "swap": swap,
-            "transfers": [] if (swap or venue) else transfers, "venue": venue}
+            "transfers": [] if (swap or venue) else transfers, "venue": venue, "mass_fee_payer": mass}
 
 def fomo_check(rows):
     hits = [r for r in rows if r["fee_payer"] in FOMO_SIGNERS or any(x in FOMO_SIGNERS for x in r["signers"])]
@@ -252,6 +268,102 @@ async def _who(s, w):
     ident["has"] = bool(ident["username"] or ident["x"] or domains or ident["kol"])
     return ident
 
+def _swap_events(rows):
+    return [{"side": r["swap"]["side"], "mint": r["swap"]["mint"], "ts": r["ts"], "sig": r["sig"]}
+            for r in rows if r.get("swap") and r.get("ts")]
+
+def _is_sweep(t):
+    """Inbound SOL that took nearly the sender's whole native balance."""
+    if t.get("dir") != "in" or t.get("mint") != WSOL: return False
+    pre, post, amt = t.get("cp_pre"), t.get("cp_post"), t.get("amount") or 0
+    if pre is None or post is None or pre < 0.05: return False
+    if amt < pre * 0.90: return False
+    if post > max(0.01, pre * 0.02): return False
+    return True
+
+def _best_sweep(rows, counterparty):
+    best = None
+    for r in rows:
+        for t in r["transfers"]:
+            if t.get("counterparty") != counterparty or not _is_sweep(t): continue
+            if not best or t["amount"] > best["amount"]:
+                best = {"amount": t["amount"], "pre": t.get("cp_pre"), "post": t.get("cp_post"), "sig": r["sig"], "ts": r["ts"]}
+    return best
+
+def _closest(a, b, window):
+    best = None
+    for x in a:
+        for y in b:
+            gap = abs((x["ts"] or 0) - (y["ts"] or 0))
+            if gap <= window and (best is None or gap < best[0]): best = (gap, x, y)
+    return best
+
+def _matched_trades(funder_events, target_events):
+    """Same token, buys within 2 minutes and sells within 1 minute."""
+    hits = []
+    mints = {e["mint"] for e in funder_events} & {e["mint"] for e in target_events}
+    for mint in mints:
+        buy = _closest([e for e in funder_events if e["mint"] == mint and e["side"] == "buy"],
+                       [e for e in target_events if e["mint"] == mint and e["side"] == "buy"], 120)
+        sell = _closest([e for e in funder_events if e["mint"] == mint and e["side"] == "sell"],
+                        [e for e in target_events if e["mint"] == mint and e["side"] == "sell"], 60)
+        if buy and sell:
+            hits.append({"mint": mint, "buy_gap": buy[0], "sell_gap": sell[0],
+                         "funder_buy": buy[1], "wallet_buy": buy[2], "funder_sell": sell[1], "wallet_sell": sell[2]})
+    hits.sort(key=lambda h: (h["sell_gap"], h["buy_gap"]))
+    return hits
+
+def _when(ts):
+    return time.strftime("%d %b", time.gmtime(ts)).lstrip("0") if ts else ""
+
+def _x_from_coin(raw):
+    raw = (raw or "").strip()
+    if not raw: return None
+    low = raw.lower()
+    if low.startswith("@"): return "https://x.com/" + raw[1:].split("/")[0].split("?")[0]
+    if "x.com/" in low or "twitter.com/" in low:
+        if not low.startswith("http"): raw = "https://" + raw
+        return raw.split("?")[0]
+    return None
+
+async def _creator_hints(s, w):
+    """X accounts named on coins this wallet created. A weak hint, not ownership evidence."""
+    coins = await _jget(s, f"https://frontend-api-v3.pump.fun/coins?creator={w}&offset=0&limit=20&includeNsfw=true&sort=created_timestamp&order=DESC") or []
+    if not isinstance(coins, list): return []
+    out, seen = [], set()
+    for c in coins:
+        if c.get("creator") != w: continue
+        link = _x_from_coin(c.get("twitter"))
+        if not link or link.lower() in seen: continue
+        seen.add(link.lower())
+        out.append({"handle": link.rstrip("/").split("/")[-1], "link": link, "symbol": c.get("symbol"),
+                    "coin_name": c.get("name"), "coin": f"https://pump.fun/coin/{c.get('mint')}"})
+    return out[:5]
+
+async def _is_last_tx(s, wallet, sig):
+    newest = await _rpc(s, "getSignaturesForAddress", [wallet, {"limit": 1}], 1) or []
+    return bool(newest) and newest[0].get("signature") == sig and not newest[0].get("err")
+
+async def _rows_near(s, wallet, have, events):
+    """Parse this wallet's transactions that sit next to a funder's swaps, beyond the recent cap."""
+    if not events: return []
+    known = {r["sig"] for r in have}
+    sigs = await _rpc(s, "getSignaturesForAddress", [wallet, {"limit": 1000}], 1) or []
+    times = [e["ts"] for e in events]
+    picked = []
+    for x in sigs:
+        bt = x.get("blockTime")
+        if not bt or x.get("err") or x["signature"] in known: continue
+        if any(abs(bt - ts) <= 130 for ts in times):
+            picked.append((min(abs(bt - ts) for ts in times), x))
+    picked = [x for _, x in sorted(picked)[:40]]
+    sem = asyncio.Semaphore(6)
+    async def one(x):
+        async with sem:
+            t = await _rpc(s, "getTransaction", [x["signature"], {"maxSupportedTransactionVersion": 1, "encoding": "jsonParsed"}])
+        return parse(t, wallet, x["signature"]) if t else None
+    return [r for r in await asyncio.gather(*[one(x) for x in picked]) if r]
+
 async def possible_owners(s, w):
     """Unconfirmed owner hunches from funders and counterparties, one or two hops. Never a confirmed match."""
     import identity
@@ -259,16 +371,24 @@ async def possible_owners(s, w):
     if me["has"]:
         return {"shown": False, "candidates": [], "reason": "This wallet already has a public profile, X handle, or .sol name."}
     fetched = await fetch(s, w)
-    direct = _agg(fetched["rows"], INFRA | {w})
+    mass = {r["mass_fee_payer"] for r in fetched["rows"] if r.get("mass_fee_payer")}
+    direct = _agg(fetched["rows"], INFRA | mass | {w})
     funders = [c for c, a in sorted(direct.items(), key=lambda kv: -kv[1]["sol_in"]) if a["sol_in"] >= 0.5][:3]
     subs = await asyncio.gather(*[fetch(s, c, n=40) for c in funders]) if funders else []
+    funder_events = {c: _swap_events(sub["rows"]) for c, sub in zip(funders, subs)}
+    near = await _rows_near(s, w, fetched["rows"], [e for ev in funder_events.values() for e in ev])
+    target_events = _swap_events(fetched["rows"]) + _swap_events(near)
+    sweeps = {c: _best_sweep(fetched["rows"], c) for c in funders}
+    quiet_flags = await asyncio.gather(*[_is_last_tx(s, c, sweeps[c]["sig"]) if sweeps.get(c) else _no() for c in funders]) if funders else []
+    quiet = dict(zip(funders, quiet_flags))
+    hint_for = dict(zip(funders, await asyncio.gather(*[_creator_hints(s, c) for c in funders]))) if funders else {}
     fomo_for, fee_for, hop2 = {}, {}, []
     for c, sub in zip(funders, subs):
         touch, fee = _fomo_touch(sub["rows"])
         if touch: fomo_for[c] = touch
         if fee: fee_for[c] = True
         via = direct[c]
-        for o, b in _agg(sub["rows"], INFRA | {w, c}).items():
+        for o, b in _agg(sub["rows"], INFRA | mass | {w, c}).items():
             if b["sol_in"] < 0.5 and not (b["in"] >= 1 and b["out"] >= 1 and b["in"] + b["out"] >= 3): continue
             hop2.append((o, b, c, via))
     # Identity on the closest counterparties, plus a couple of second-hop wallets behind funders that may themselves be unnamed.
@@ -287,8 +407,33 @@ async def possible_owners(s, w):
         a = direct[c]
         touch = fomo_for.get(c)
         score, conf, parts = _score(a["sol_in"], a["in"], a["out"], touch["sol"] if touch else None, bool(fee_for.get(c)), 1)
+        evidence, raised = [], False
+        sweep = sweeps.get(c)
+        if sweep and quiet.get(c):
+            raised = True
+            score += 40
+            when = _when(sweep["ts"])
+            parts.insert(0, f"On {when} they swept {sweep['amount']:.4f} SOL, nearly their entire balance, into this wallet and have not transacted since. That funding transaction is their last one.")
+            evidence.append({"text": f"Swept {sweep['amount']:.4f} SOL on {when}, then went inactive. This is their last transaction.",
+                             "links": [{"label": "Sweep tx", "link": f"https://solscan.io/tx/{sweep['sig']}"}]})
+        trades = _matched_trades(funder_events.get(c) or [], target_events)
+        if trades:
+            raised = True
+            score += 40
+            trade = trades[0]
+            meta = await coin_meta(s, trade["mint"])
+            label = ("$" + meta["symbol"]) if meta.get("symbol") else (trade["mint"][:4] + "…" + trade["mint"][-4:])
+            when = _when(trade["wallet_sell"]["ts"])
+            parts.insert(1 if sweep and quiet else 0, f"On {when} both wallets bought {label} within {int(trade['buy_gap'])} seconds and sold it within {int(trade['sell_gap'])} seconds.")
+            evidence.append({"text": f"Both bought {label} within {int(trade['buy_gap'])}s and sold within {int(trade['sell_gap'])}s.",
+                             "links": [{"label": "Their buy", "link": f"https://solscan.io/tx/{trade['funder_buy']['sig']}"},
+                                       {"label": "This wallet's buy", "link": f"https://solscan.io/tx/{trade['wallet_buy']['sig']}"},
+                                       {"label": "Their sell", "link": f"https://solscan.io/tx/{trade['funder_sell']['sig']}"},
+                                       {"label": "This wallet's sell", "link": f"https://solscan.io/tx/{trade['wallet_sell']['sig']}"},
+                                       {"label": "Coin", "link": f"https://pump.fun/coin/{trade['mint']}"}]})
+        if raised: conf = "High"
         if not parts: continue
-        leads.append(_lead(c, ident, a, score, conf, parts, 1, None, touch))
+        leads.append(_lead(c, ident, a, score, conf, parts, 1, None, touch, evidence, hint_for.get(c) or []))
     for o, b, c, via in hop2:
         ident = named.get(o)
         if not ident or not ident["has"] or ident["payout"] or o in INFRA: continue
@@ -305,9 +450,12 @@ async def possible_owners(s, w):
     show = (strong or leads)[:3]
     return {"shown": True, "candidates": show, "checked_counterparties": len(direct),
             "txs_parsed": len(fetched["rows"]),
-            "method": "Unconfirmed hunches only, ranked from public transfers. Funding this wallet is strong, repeated two-way transfers are medium, a one-off transfer is weak. Sending to the same Fomo collection account adds weight. The Fomo fee payer, the Fomo collection account, relayers, gas sponsors, and known casino payouts such as Flip.gg (visitflipgg.sol) are excluded."}
+            "method": "Unconfirmed hunches only, ranked from public transfers. Funding this wallet is strong, repeated two-way transfers are medium, a one-off transfer is weak. A funder who swept nearly their whole balance in and then stopped, or who bought the same token within 2 minutes and sold it within 1 minute, is rated high. Sending to the same Fomo collection account adds weight. X links on coins they created are weak hints only. The Fomo fee payer, the Fomo collection account, relayers, gas sponsors, mass-distributor fee payers such as the pump.fun fee distributor, and known casino payouts such as Flip.gg (visitflipgg.sol) are excluded."}
 
-def _lead(wallet, ident, stats, score, conf, parts, hop, via, touch):
+async def _no():
+    return False
+
+def _lead(wallet, ident, stats, score, conf, parts, hop, via, touch, evidence=None, hints=None):
     title = ident["username"] or (ident["x"] and "@" + ident["x"]) or (ident["domains"][0] if ident["domains"] else None) or ident["kol"] or wallet[:4] + "…" + wallet[-4:]
     tx = stats.get("fund_tx") or stats.get("example_tx")
     parts.append("This is an unconfirmed lead, not a verified owner.")
@@ -322,10 +470,12 @@ def _lead(wallet, ident, stats, score, conf, parts, hop, via, touch):
            "kol": {"name": ident["kol"], "link": ident["kol_link"]} if ident.get("kol") else None}
     if via: out["via"] = via["wallet"]
     if touch: out["fomo_tx_link"] = f"https://solscan.io/tx/{touch['tx']}"
+    if evidence: out["evidence"] = evidence
+    if hints: out["hints"] = hints
     return out
 
 async def activity(w, kind="all", limit=50, before=None):
-    timeout = 90 if kind == "owner" else 60
+    timeout = 120 if kind == "owner" else 60
     async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=timeout), headers={"User-Agent": "Mozilla/5.0"}) as s:
         res = {"wallet": w}
         if kind == "owner":

@@ -82,6 +82,9 @@ a.badge:hover{text-decoration:none;transform:translateY(-1px);border-color:rgba(
 .card.act:hover,.card.hunch:hover,.card.calls:hover{transform:none}
 .card.hunch{border-color:rgba(255,193,77,.4);box-shadow:0 0 0 1px rgba(255,193,77,.14),0 16px 40px rgba(0,0,0,.28)}
 .lead{padding:12px 0;border-top:1px solid rgba(255,255,255,.06)}.lead:first-child{border-top:0}
+.ev{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.evrow{display:flex;flex-direction:column;gap:6px;padding:8px 10px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.03);min-width:0}
+.hintrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px}
 .who{font-family:Syne,Outfit,sans-serif;font-weight:800;font-size:20px;letter-spacing:-.03em}
 .conf{font-weight:800;letter-spacing:.08em;text-transform:uppercase;font-size:11px}
 .conf.high{color:var(--warn)}.conf.med{color:#ffb080}.conf.low{color:var(--mut)}
@@ -254,7 +257,9 @@ async function loadOwner(){
   (c.domains||[]).forEach(n=>links.push(`<a class="badge" ${ext(n.link)}>${esc(n.name)}</a>`));
   if(c.kol)links.push(`<a class="badge" ${ext(c.kol.link)}>${esc(c.kol.name)}</a>`);
   if(c.fomo_tx_link)links.push(`<a class="linkbtn" ${ext(c.fomo_tx_link)}>Fomo collection tx ↗</a>`);
-  return `<div class="lead"><div class="row"><span class="who">${esc(c.title)}</span><span class="badge warn">${esc(c.label)}</span></div><div class="note"><span class="conf ${cls}">${esc(c.confidence)} confidence</span> · ${c.hop===1?'direct counterparty':'two hops out'}</div><p class="note">${esc(c.reason)}</p><div class="links">${links.join('')}</div></div>`;
+  const ev=(c.evidence||[]).map(e=>`<div class="evrow"><span>${esc(e.text)}</span><span class="links">${(e.links||[]).map(l=>`<a class="linkbtn" ${ext(l.link)}>${esc(l.label)} ↗</a>`).join('')}</span></div>`).join('');
+  const hints=(c.hints||[]).map(h=>`<a class="badge" ${ext(h.link)} title="${esc(h.coin_name||'')}">Weak hint · @${esc(h.handle)} · $${esc(h.symbol||'?')}</a>`).join('');
+  return `<div class="lead"><div class="row"><span class="who">${esc(c.title)}</span><span class="badge warn">${esc(c.label)}</span></div><div class="note"><span class="conf ${cls}">${esc(c.confidence)} confidence</span> · ${c.hop===1?'direct counterparty':'two hops out'}</div><p class="note">${esc(c.reason)}</p>${ev?`<div class="ev">${ev}</div>`:''}${hints?`<div class="hintrow"><span class="mut">From coins they created. A weak hint, not proof.</span>${hints}</div>`:''}<div class="links">${links.join('')}</div></div>`;
  }).join('')+`<div class="mut note">${esc(o.method||'')} Based on the last ${o.txs_parsed||0} parsed transactions.</div>`;
 }
 async function loadLinked(){
