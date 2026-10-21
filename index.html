@@ -1,6 +1,6 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>FomoFinder</title><meta name="description" content="FomoFinder: look up public info tied to a Solana wallet (pump.fun, X, .sol domains, holdings, wallet age)."><meta property="og:title" content="FomoFinder"><meta property="og:description" content="Look up public info tied to any Solana wallet."><meta name="twitter:title" content="FomoFinder"><meta name="application-name" content="FomoFinder"><meta name="theme-color" content="#07060b">
-<script>try{var r=document.documentElement;if(new URLSearchParams(location.search).get('q'))r.classList.add('direct','scroll-ok');else r.classList.add('noscroll')}catch(e){}</script>
+<title>FomoFinder</title><meta name="description" content="FomoFinder: look up public info tied to a Solana wallet (pump.fun, X, .sol domains, holdings, wallet age)."><meta property="og:title" content="FomoFinder"><meta property="og:description" content="Look up public info tied to any Solana wallet."><meta property="og:image" content="https://fomofinder.onrender.com/static/fomofinder_black.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="FomoFinder"><meta name="twitter:image" content="https://fomofinder.onrender.com/static/fomofinder_black.png"><meta name="application-name" content="FomoFinder"><meta name="theme-color" content="#07060b"><link rel="icon" type="image/png" href="/static/fomofinder_black.png">
+<script>try{var r=document.documentElement;if(new URLSearchParams(location.search).get('q'))r.classList.add('direct','scroll-ok');else{r.classList.add('noscroll');try{if(localStorage.getItem('ff-promo-skip')==='1')r.classList.add('promo-skipped')}catch(e){}}}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <style>
@@ -42,7 +42,8 @@ html.scroll-ok,html.scroll-ok body,html.direct,html.direct body{overflow:visible
 .half.fomo{color:#e7f3ff;border-right:1px solid rgba(255,255,255,.14);background-color:#071428;background-image:linear-gradient(rgba(126,200,255,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(126,200,255,.12) 1px,transparent 1px),radial-gradient(540px 300px at 72% 12%,rgba(70,150,255,.28),transparent 70%),linear-gradient(180deg,#0e2c52,#07111f);background-size:32px 32px,32px 32px,auto,auto}
 .half.caller{background:linear-gradient(180deg,#ffffff 0%,#f4fff8 100%);color:var(--ink)}
 .pane-brand{display:flex;align-items:center;gap:12px;margin:0 0 16px}
-.pane-brand h2{margin:0;font-family:Syne,Outfit,sans-serif;font-size:22px;letter-spacing:.14em;line-height:1}
+.pane-brand h2{margin:0;font-family:Syne,Outfit,sans-serif;font-size:22px;letter-spacing:.14em;line-height:0}
+.pane-brand h2 .wordmark{width:72px;height:72px;object-fit:contain;display:block;border-radius:12px}
 .pane-sub{margin:2px 0 0;font-size:12px;letter-spacing:.04em}
 .half.fomo .pane-sub{color:#9ec4ea}
 .half.caller .pane-sub{color:#5d7a70}
@@ -225,6 +226,11 @@ a.badge:hover{text-decoration:none}
 .pin-card{align-items:flex-start}
 .pin-actions{width:100%}
 }
+.splash{position:fixed;inset:0;z-index:40;width:100%;height:100dvh;background:#000 url('/static/intro-poster.jpg') center/cover no-repeat;transition:opacity .45s ease}
+.splash video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000 url('/static/intro-poster.jpg') center/cover no-repeat}
+.splash-bar{position:absolute;top:14px;right:14px;z-index:2;display:flex;gap:8px;align-items:center}
+.splash.out{opacity:0;pointer-events:none}
+html.direct .splash,html.promo-skipped .splash{display:none}
 .intro{position:fixed;inset:0;z-index:30;width:100%;height:100dvh;display:flex;flex-direction:column;align-items:center;gap:12px;padding:14px 16px 16px;overflow:hidden;background:radial-gradient(900px 520px at 50% 0%,rgba(95,203,136,.18),transparent 55%),radial-gradient(700px 480px at 80% 100%,rgba(60,140,255,.22),transparent 52%),#07060b;transition:opacity .4s ease,transform .4s ease}
 html.direct .intro{display:none}
 html:not(.direct) .wrap{visibility:hidden}
@@ -235,11 +241,14 @@ html.direct .wrap,body.ready .wrap{visibility:visible}
 .intro .creditlines{align-items:flex-start}
 .intro .creditlink img.brand{width:96px}
 .skiplink{color:#d9d4e6;font:700 13px/1 Outfit,sans-serif;text-decoration:underline;text-underline-offset:3px;padding:8px}
+button.skiplink{background:transparent;border:0;cursor:pointer}
 .skiplink:hover{color:#fff}
 .mutebtn{border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.08);color:#fff;border-radius:999px;padding:7px 12px;font:700 12px/1 Outfit,sans-serif;cursor:pointer;white-space:nowrap}
 .mutebtn:focus-visible{outline:3px solid #5FCB88;outline-offset:3px}
-.phone-row{display:flex;align-items:center;justify-content:center;gap:22px;width:min(760px,100%);flex:1;min-height:0;max-height:100%}
-.flank{width:76px;height:76px;object-fit:contain;flex:none;pointer-events:none}
+.phone-row{display:flex;align-items:center;justify-content:center;gap:16px;width:min(1080px,100%);flex:1;min-height:0;max-height:100%}
+.pair{display:flex;align-items:center;gap:10px;flex:none}
+.pair .wordmark{width:96px;height:96px;object-fit:contain;flex:none;pointer-events:none}
+.flank{width:72px;height:72px;object-fit:contain;flex:none;pointer-events:none}
 .flank-pump{background:#1D3934;border-radius:18px;padding:14px}
 .iphone{width:min(390px,100%);height:min(760px,100%);max-height:100%;background:#0a0a0c;border-radius:48px;padding:12px;box-shadow:0 30px 80px rgba(0,0,0,.55),inset 0 0 0 2px #2a2a2e;position:relative;flex:none}
 .iphone.ringing{animation:buzz .42s linear infinite}
@@ -286,11 +295,13 @@ html.direct .wrap,body.ready .wrap{visibility:visible}
 .xconn{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:4px}
 @media(max-width:860px){
 .intro{padding:10px 10px 14px;gap:10px}
-.phone-row{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto minmax(0,1fr);column-gap:16px;row-gap:8px;align-items:center;justify-items:center;width:min(390px,100%);flex:1;min-height:0}
-.flank{width:48px;height:48px}
-.flank-pump{padding:8px;border-radius:14px}
-.flank-fomo{grid-column:1;grid-row:1;justify-self:start;align-self:end}
-.flank-pump{grid-column:2;grid-row:1;justify-self:end;align-self:end}
+.phone-row{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto minmax(0,1fr);column-gap:10px;row-gap:8px;align-items:end;justify-items:center;width:min(390px,100%);flex:1;min-height:0}
+.pair{gap:6px}
+.pair .wordmark{width:64px;height:64px}
+.flank{width:40px;height:40px}
+.flank-pump{padding:6px;border-radius:12px}
+.pair-fomo{grid-column:1;grid-row:1;justify-self:start}
+.pair-pump{grid-column:2;grid-row:1;justify-self:end}
 .iphone{grid-column:1 / -1;grid-row:2;height:100%;max-height:100%;border-radius:36px;padding:8px;width:100%}
 .ios{border-radius:28px}
 .intro .creditlink img.brand{width:72px}
@@ -303,11 +314,18 @@ html.direct .wrap,body.ready .wrap{visibility:visible}
 .radar{opacity:.4}
 .ring{opacity:.45;transform:none}
 .round:hover,.search button:hover{transform:none}
-.intro,.ringstage,.entrystage,.knob{transition:none!important}
+.intro,.splash,.ringstage,.entrystage,.knob{transition:none!important}
 .iphone.ringing{animation:none!important}
 }
 </style></head><body>
 <div class="aurora" aria-hidden="true"></div><div class="mesh" aria-hidden="true"></div>
+<div class="splash" id="splash">
+<video id="promo" poster="/static/intro-poster.jpg" autoplay muted playsinline preload="auto" disablepictureinpicture></video>
+<div class="splash-bar">
+<button type="button" class="mutebtn" id="promo-sound" aria-pressed="false">tap for sound</button>
+<button type="button" class="skiplink" id="promo-skip">Skip</button>
+</div>
+</div>
 <div class="intro" id="intro">
 <div class="intro-top">
 <div class="creditstack"><a class="creditlink" href="https://x.com/Z00WOP" target="_blank" rel="noopener"><img class="brand" src="/static/goers.webp" alt="Goers &amp; Blowerz" width="400" height="233"></a><span class="creditlines"><a class="creditlink" href="https://x.com/Z00WOP" target="_blank" rel="noopener"><span class="credit"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.259-6.874L7.73 21.75H4.42l7.727-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>MADE BY <span class="zname">Z<span class="oh">0</span><span class="oh">0</span>WOP</span></span></a><a class="pumplink" href="https://pump.fun/u/Z00WOP" target="_blank" rel="noopener"><img src="/static/pump-logomark.svg" alt="">pump.fun/<span class="zname">Z<span class="oh">0</span><span class="oh">0</span>WOP</span></a></span></div>
@@ -315,7 +333,7 @@ html.direct .wrap,body.ready .wrap{visibility:visible}
 <a class="skiplink" href="#lookup" id="skip">Skip</a>
 </div>
 <div class="phone-row">
-<img class="flank flank-fomo" src="/static/fomo-icon.png" alt="Fomo">
+<div class="pair pair-fomo"><img class="wordmark" src="/static/fomofinder_black.png" alt="FOMO FINDER"><img class="flank flank-fomo" src="/static/fomo-icon.png" alt="Fomo"></div>
 <div class="iphone" id="iphone">
 <div class="island" aria-hidden="true"></div>
 <div class="ios" id="ios">
@@ -343,7 +361,7 @@ html.direct .wrap,body.ready .wrap{visibility:visible}
 </section>
 </div>
 </div>
-<img class="flank flank-pump" src="/static/pump-logomark.svg" alt="pump.fun">
+<div class="pair pair-pump"><img class="flank flank-pump" src="/static/pump-logomark.svg" alt="pump.fun"><img class="wordmark" src="/static/callerid_black.png" alt="CALLER ID"></div>
 </div>
 </div>
 <div class="wrap" id="lookup">
@@ -421,7 +439,7 @@ function paintRoute(){
   return `<div class="leg">${a}<div class="road"><span class="road-line" aria-hidden="true"></span><span class="dist">${s.sol.toFixed(2)} SOL</span></div>${b}</div>`;
  }).join('');
 }
-async function go(q){$('#st').textContent='Locating wallet…';$('#out').innerHTML=`<div class="split"><section class="half fomo" aria-label="Fomo Finder"><div class="pane-brand">${img('fomo','mark fomo')}<div><h2>FOMO FINDER</h2><p class="pane-sub">Maps</p></div></div>${steps('loc')}${pinCard({name:'Locating wallet…',sub:'Searching the map'})}</section><section class="half caller" aria-label="Caller ID"><div class="pane-brand"><span class="logo-chip">${img('pump','mark')}</span><div><h2>CALLER ID</h2><p class="pane-sub">pump.fun</p></div></div><p class="mut">Incoming call… waiting for the lookup.</p></section></div>`;history.replaceState(null,'','?q='+encodeURIComponent(q));document.title='FomoFinder · '+q.slice(0,8);
+async function go(q){$('#st').textContent='Locating wallet…';$('#out').innerHTML=`<div class="split"><section class="half fomo" aria-label="Fomo Finder"><div class="pane-brand">${img('fomo','mark fomo')}<div><h2><img class="wordmark" src="/static/fomofinder_black.png" alt="FOMO FINDER"></h2><p class="pane-sub">Maps</p></div></div>${steps('loc')}${pinCard({name:'Locating wallet…',sub:'Searching the map'})}</section><section class="half caller" aria-label="Caller ID"><div class="pane-brand"><span class="logo-chip">${img('pump','mark')}</span><div><h2><img class="wordmark" src="/static/callerid_black.png" alt="CALLER ID"></h2><p class="pane-sub">pump.fun</p></div></div><p class="mut">Incoming call… waiting for the lookup.</p></section></div>`;history.replaceState(null,'','?q='+encodeURIComponent(q));document.title='FomoFinder · '+q.slice(0,8);
  let r;try{r=await (await fetch('/api/lookup?q='+encodeURIComponent(q))).json()}catch(e){$('#st').textContent='Lookup failed, try again.';return}if(r.error||r.detail){$('#st').textContent=r.error||r.detail;return}$('#st').textContent='';
  const p=r.pump||{},x=r.x||{},d=r.domains||{},h=r.holdings||{},hi=r.history||{},f=r.fomo||{},k=r.kolscan||{};
  CUR=r.wallet;GPS={owner:false,linked:false};ROUTES=[];LEADS=[];XFUND=[];XMISS=[];XREADY=false;XREP={matches:[],misses:[],note:'',posts_searched:false,empty:null};
@@ -431,7 +449,7 @@ async function go(q){$('#st').textContent='Locating wallet…';$('#out').innerHT
  const leftName=p.username||d.primary||sh(r.wallet);
  const rightName=p.username||sh(r.wallet);
  let o='<div class="split">';
- o+=`<section class="half fomo" aria-label="Fomo Finder"><div class="pane-brand">${img('fomo','mark fomo')}<div><h2>FOMO FINDER</h2><p class="pane-sub">Maps · on-chain</p></div></div>`;
+ o+=`<section class="half fomo" aria-label="Fomo Finder"><div class="pane-brand">${img('fomo','mark fomo')}<div><h2><img class="wordmark" src="/static/fomofinder_black.png" alt="FOMO FINDER"></h2><p class="pane-sub">Maps · on-chain</p></div></div>`;
  o+=steps('search');
  o+=pinCard({name:leftName,sub:f.verified?'Fomo wallet':'Pinned location',wallet:r.wallet,accept:solscan,lock:!!(p.username||d.primary)});
  o+=card('Route','waypoints','<div id="route"><p class="mut"><span class=spin></span>Searching…</p></div>');
@@ -441,7 +459,7 @@ async function go(q){$('#st').textContent='Locating wallet…';$('#out').innerHT
  o+=card('Possible owner','unconfirmed','<div id="owner"><span class=spin></span>Checking funders and counterparties…</div>','hunch');
  o+=card('Fomo theses','',`<p class="note">Fomo keeps theses private behind login. prod-api.fomo.family returns unauthorized without a session, so theses are not listed here.</p>${f.note?`<p class="mut note">${esc(f.note)}</p>`:''}`);
  o+='</section>';
- o+=`<section class="half caller" aria-label="Caller ID"><div class="pane-brand"><span class="logo-chip">${img('pump','mark')}</span><div><h2>CALLER ID</h2><p class="pane-sub">pump.fun</p></div></div>`;
+ o+=`<section class="half caller" aria-label="Caller ID"><div class="pane-brand"><span class="logo-chip">${img('pump','mark')}</span><div><h2><img class="wordmark" src="/static/callerid_black.png" alt="CALLER ID"></h2><p class="pane-sub">pump.fun</p></div></div>`;
  o+=phone({nameId:'cname',subId:'csub',name:rightName,sub:'Incoming call… pump.fun',wallet:r.wallet,image:p.image,fallback:'/static/pump-logomark.svg',accept:pumpLink,acceptLabel:'View on pump.fun'});
  o+=card('Profile',p.username?'pump.fun':'',p.username?`<div class="row"><span>Username</span><a ${ext(p.link)}>${esc(p.username)}</a></div><div class="row"><span>Followers</span><b>${(p.followers||0).toLocaleString()}</b></div><div class="row"><span>Following</span><b>${(p.following||0).toLocaleString()}</b></div>${p.bio?`<div class="note">${esc(p.bio)}</div>`:''}${p.evm_wallet?`<div class="row"><span>Linked EVM</span><code>${esc(p.evm_wallet)}</code></div>`:''}`:'<span class="mut">No pump.fun profile</span>','','pump');
  if(x.handle)o+=card('X profile',x.source?('from '+x.source):'confirmed',xBlock(x));
@@ -788,7 +806,34 @@ function initIntro(){
   $('#q').value=q; leave(); go(q);
  });
 }
+function initSplash(){
+ const splash=$('#splash'), video=$('#promo'), sound=$('#promo-sound'), skip=$('#promo-skip');
+ const narrow=matchMedia('(orientation: portrait), (max-width: 860px)').matches;
+ const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+ video.src=narrow?'/static/intro_1x1.mp4':'/static/intro.mp4';
+ video.muted=true; video.playsInline=true; video.setAttribute('playsinline','');
+ let done=false;
+ function finish(){
+  if(done)return; done=true;
+  try{video.pause()}catch(e){}
+  splash.classList.add('out');
+  const hide=()=>{splash.hidden=true; splash.style.display='none'};
+  if(reduced)hide(); else{splash.addEventListener('transitionend',hide,{once:true}); setTimeout(hide,700)}
+  initIntro();
+ }
+ skip.addEventListener('click',()=>{try{localStorage.setItem('ff-promo-skip','1')}catch(e){} finish()});
+ video.addEventListener('ended',finish);
+ video.addEventListener('error',()=>{if(video.currentSrc)finish()});
+ sound.addEventListener('click',()=>{
+  video.muted=!video.muted;
+  if(!video.muted){video.volume=1; const p=video.play(); if(p&&p.catch)p.catch(()=>{})}
+  sound.textContent=video.muted?'tap for sound':'Mute';
+  sound.setAttribute('aria-pressed', video.muted?'false':'true');
+ });
+ const p=video.play(); if(p&&p.catch)p.catch(()=>{});
+}
 const q0=new URLSearchParams(location.search).get('q');
 if(q0){unlockScroll();$('#q').value=q0;go(q0)}
-else initIntro();
+else if(document.documentElement.classList.contains('promo-skipped')) initIntro();
+else initSplash();
 </script></body></html>

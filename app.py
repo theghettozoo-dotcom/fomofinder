@@ -7,6 +7,8 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 import identity, activity, aiohttp
 mimetypes.add_type("image/webp", ".webp")
+mimetypes.add_type("video/mp4", ".mp4")
+mimetypes.add_type("image/jpeg", ".jpg")
 app = FastAPI(title="FomoFinder", docs_url=None, redoc_url=None, openapi_url=None)
 HERE = os.path.dirname(os.path.abspath(__file__))
 app.mount("/static", StaticFiles(directory=os.path.join(HERE, "static")), name="static")
