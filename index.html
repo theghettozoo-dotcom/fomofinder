@@ -15,8 +15,11 @@ body{margin:0;min-height:100vh;display:flex;flex-direction:column;overflow-x:cli
 .creditlink{display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--mut);text-decoration:none;flex:none}
 .creditlink:hover{color:var(--txt);text-decoration:none}
 .creditlink img.brand{width:128px;height:auto;display:block}
-.credit{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:700;letter-spacing:.16em;line-height:1;white-space:nowrap}
+.credit{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:700;letter-spacing:.14em;line-height:1;white-space:nowrap}
 .credit svg{width:12px;height:12px;fill:currentColor;flex:none}
+.credit .zname{display:inline-flex;align-items:center;gap:.04em;letter-spacing:0;line-height:1}
+.credit .oh{position:relative;display:inline-flex;align-items:center;justify-content:center;font-size:2em;font-weight:800;letter-spacing:0;line-height:1;width:.68em;height:1em}
+.credit .oh::after{content:"";position:absolute;left:2%;width:96%;top:50%;height:2px;background:currentColor;transform:translateY(-50%) rotate(-32deg);border-radius:1px;pointer-events:none}
 .search{flex:1;display:flex;gap:8px;padding:7px;border-radius:20px;background:linear-gradient(180deg,rgba(22,18,34,.92),rgba(12,10,20,.92)) padding-box,linear-gradient(115deg,#7ec8ff,#3a7bff 42%,#5FCB88) border-box;border:1.5px solid transparent;box-shadow:0 18px 70px rgba(60,140,255,.14),inset 0 1px 0 rgba(255,255,255,.08)}
 .search:focus-within{box-shadow:0 0 0 4px rgba(95,203,136,.16),0 18px 70px rgba(60,140,255,.2),inset 0 1px 0 rgba(255,255,255,.1)}
 .search input{flex:1;min-width:0;background:transparent;border:0;color:var(--txt);padding:14px 16px;font:15px/1.4 "JetBrains Mono",ui-monospace,Menlo,monospace;outline:none}
@@ -259,6 +262,11 @@ body.ready{overflow-x:clip;overflow-y:auto}
 .xev{margin:8px 0 0;padding:0;list-style:none}
 .xev li{padding:4px 0;overflow-wrap:anywhere}
 .xsrc{opacity:.75}
+.xprof{display:flex;gap:12px;align-items:flex-start;padding:4px 0 8px}
+.xprof .xav{width:52px;height:52px;border-radius:50%;object-fit:cover;flex:none;background:#111}
+.xprof .xmain{min-width:0;flex:1}
+.xbio{margin:6px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.xconn{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:4px}
 @media(max-width:860px){
 .intro{padding:10px 10px 14px;gap:10px}
 .iphone{height:min(740px,calc(100dvh - 104px));border-radius:36px;padding:8px}
@@ -279,7 +287,7 @@ body.ready{overflow-x:clip;overflow-y:auto}
 <div class="aurora" aria-hidden="true"></div><div class="mesh" aria-hidden="true"></div>
 <div class="intro" id="intro">
 <div class="intro-top">
-<a class="creditlink" href="https://x.com/Z00VIE" target="_blank" rel="noopener"><img class="brand" src="/static/goers.webp" alt="Goers &amp; Blowerz" width="400" height="233"><span class="credit"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.259-6.874L7.73 21.75H4.42l7.727-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>MADE BY @Z00VIE</span></a>
+<a class="creditlink" href="https://x.com/Z00WOP" target="_blank" rel="noopener"><img class="brand" src="/static/goers.webp" alt="Goers &amp; Blowerz" width="400" height="233"><span class="credit"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.259-6.874L7.73 21.75H4.42l7.727-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>MADE BY <span class="zname">Z<span class="oh">0</span><span class="oh">0</span>WOP</span></span></a>
 <a class="skiplink" href="#lookup" id="skip">Skip</a>
 </div>
 <div class="iphone" id="iphone">
@@ -312,7 +320,7 @@ body.ready{overflow-x:clip;overflow-y:auto}
 </div>
 <div class="wrap" id="lookup">
 <header class="top">
-<a class="creditlink" href="https://x.com/Z00VIE" target="_blank" rel="noopener"><img class="brand" src="/static/goers.webp" alt="Goers &amp; Blowerz" width="400" height="233"><span class="credit"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.259-6.874L7.73 21.75H4.42l7.727-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>MADE BY @Z00VIE</span></a>
+<a class="creditlink" href="https://x.com/Z00WOP" target="_blank" rel="noopener"><img class="brand" src="/static/goers.webp" alt="Goers &amp; Blowerz" width="400" height="233"><span class="credit"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.259-6.874L7.73 21.75H4.42l7.727-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>MADE BY <span class="zname">Z<span class="oh">0</span><span class="oh">0</span>WOP</span></span></a>
 <form id="f" class="search"><input id="q" placeholder="Solana wallet · pump.fun URL · username" autocomplete="off" enterkeyhint="search"><button type="submit">Look up</button></form>
 </header>
 <div id="st" role="status"></div><div id="out"></div>
@@ -408,10 +416,11 @@ async function go(q){$('#st').textContent='Locating wallet…';$('#out').innerHT
  o+=`<section class="half caller" aria-label="Caller ID"><div class="pane-brand"><span class="logo-chip">${img('pump','mark')}</span><div><h2>CALLER ID</h2><p class="pane-sub">pump.fun</p></div></div>`;
  o+=phone({nameId:'cname',subId:'csub',name:rightName,sub:'Incoming call… pump.fun',wallet:r.wallet,image:p.image,fallback:'/static/pump-logomark.svg',accept:pumpLink,acceptLabel:'View on pump.fun'});
  o+=card('Profile',p.username?'pump.fun':'',p.username?`<div class="row"><span>Username</span><a ${ext(p.link)}>${esc(p.username)}</a></div><div class="row"><span>Followers</span><b>${(p.followers||0).toLocaleString()}</b></div><div class="row"><span>Following</span><b>${(p.following||0).toLocaleString()}</b></div>${p.bio?`<div class="note">${esc(p.bio)}</div>`:''}${p.evm_wallet?`<div class="row"><span>Linked EVM</span><code>${esc(p.evm_wallet)}</code></div>`:''}`:'<span class="mut">No pump.fun profile</span>','','pump');
+ if(x.handle)o+=card('X profile',x.source?('from '+x.source):'confirmed',xBlock(x));
  o+=card('Callouts &amp; Theses','',`<div id="calls"><span class=spin></span>Loading callouts…</div>`,'calls','pump');
  o+=card('Coins Devved','',devved(p),'','pump');
  o+='</section></div>';
- const xBody=(x.handle?`<div class="row"><span>Account</span><a ${ext(x.link)}>@${esc(x.handle)}</a></div>`:'<span class="mut">No linked X account</span>')+`<div class="row"><span>Posts mentioning wallet</span><a ${ext(x.search_link)}>search X ↗</a></div>${x.note?`<div class="mut note">Live X search needs an API key on this server.</div>`:''}`;
+ const xBody=(x.handle?`<div class="row"><span>X</span><a ${ext(x.link)}>@${esc(x.handle)}</a> <span class="badge ok">Confirmed</span>${x.source?` <span class="xsrc">from ${esc(x.source)}</span>`:''}</div>`:'<span class="mut">No linked X account</span>')+`<div class="row"><span>Posts mentioning wallet</span><a ${ext(x.search_link||('https://x.com/search?q='+encodeURIComponent(r.wallet)+'&f=live'))}>search X ↗</a></div>${x.note&&!x.profile?`<div class="mut note">${esc(x.note)}</div>`:''}`;
  o+=`<div class="below">`;
  o+=card('Also on file','',`<div class="links">${(r.found_on||[]).map(n=>`<span class="badge">${esc(n)}</span>`).join('')||'<span class="mut">No public identity</span>'}</div>${xBody}${d.domains&&d.domains.length?`<div class="row"><span>.sol</span><span>${d.domains.map((n,i)=>`<a class="badge" ${ext(d.links[i])}>${esc(n)}</a>`).join('')}</span></div>`:'<div class="row"><span>.sol</span><span class="mut">No .sol domains</span></div>'}${k.is_kol?`<div class="row"><span>KOLscan</span><a ${ext(k.link)}>${esc(k.name)}</a></div>`:'<div class="row"><span>KOLscan</span><span class="mut">Not tracked</span></div>'}${hi.complete?`<div class="row"><span>First tx</span><a ${ext(hi.first_tx_link)}>${day(hi.first_seen)}</a></div><div class="row"><span>Transactions</span><b>${hi.tx_count}</b></div>`:`<div class="row"><span>Active since at least</span><b>${day(hi.oldest_seen)}</b></div><div class="row"><span>Transactions</span><b>${(hi.tx_count_min||0).toLocaleString()}+</b></div>`}`);
  o+=card('Name match on X','fxtwitter · pump.fun','<div id="xmatch"><span class=spin></span>Checking handles…</div>');
@@ -531,10 +540,30 @@ async function loadOwner(){
   if(c.fomo_tx_link)links.push(`<a class="linkbtn" ${ext(c.fomo_tx_link)}>Fomo collection tx ↗</a>`);
   const ev=(c.evidence||[]).map(e=>`<div class="evrow"><span>${esc(e.text)}</span><span class="links">${(e.links||[]).map(l=>`<a class="linkbtn" ${ext(l.link)}>${esc(l.label)} ↗</a>`).join('')}</span></div>`).join('');
   const hints=(c.hints||[]).map(h=>`<a class="badge" ${ext(h.link)} title="${esc(h.coin_name||'')}">Weak hint · @${esc(h.handle)} · $${esc(h.symbol||'?')}</a>`).join('');
-  return `<div class="lead"><div class="row"><span class="who">${esc(c.title)}</span><span class="badge warn">${esc(c.label)}</span></div><div class="note"><span class="conf ${cls}">${esc(c.confidence)} confidence</span> · ${c.hop===1?'direct counterparty':'two hops out'}</div><p class="note">${esc(c.reason)}</p>${ev?`<div class="ev">${ev}</div>`:''}${hints?`<div class="hintrow">${hints}</div>`:''}<div class="links">${links.join('')}</div></div>`;
+  const xp=c.x_profile&&c.x_profile.handle?`<div class="xlead">${xBlock(c.x_profile)}</div>`:'';
+  return `<div class="lead"><div class="row"><span class="who">${esc(c.title)}</span><span class="badge warn">${esc(c.label)}</span></div><div class="note"><span class="conf ${cls}">${esc(c.confidence)} confidence</span> · ${c.hop===1?'direct counterparty':'two hops out'}</div><p class="note">${esc(c.reason)}</p>${xp}${ev?`<div class="ev">${ev}</div>`:''}${hints?`<div class="hintrow">${hints}</div>`:''}<div class="links">${links.join('')}</div></div>`;
  }).join('')+`<div class="mut note">${esc(o.method||'')} Based on the last ${o.txs_parsed||0} parsed transactions.</div>`;
 }
 let XREP={matches:[],misses:[],note:'',posts_searched:false,empty:null}, XFUND=[], XMISS=[], XREADY=false;
+function xBlock(x){
+ if(!x)return '';
+ const list=(x.profiles&&x.profiles.length)?x.profiles:(x.handle?[{handle:x.handle,link:x.link,source:x.source,confirmed:true,profile:x.profile,error:x.note}]:[]);
+ if(!list.length)return '';
+ const conn=(x.connected||[]).map(c=>`<a class="badge" ${ext(c.link)}>${esc(c.kind==='x'?c.label:(c.kind+' · '+c.label))}</a>`).join('');
+ const body=list.map(p=>{
+  const u=p.profile||{};
+  const av=u.avatar?`<img class="xav" src="${esc(u.avatar)}" alt="" referrerpolicy="no-referrer">`:'';
+  const bits=[];
+  if(u.followers!=null)bits.push(Number(u.followers).toLocaleString()+' followers');
+  if(u.following!=null)bits.push(Number(u.following).toLocaleString()+' following');
+  const bio=u.description?`<p class="xbio">${esc(u.description)}</p>`:'';
+  const src=p.source?`<span class="xsrc">from ${esc(p.source)}</span>`:'';
+  const badge=p.confirmed===false?'':`<span class="badge ok">Confirmed</span>`;
+  const miss=!u.name&&p.error?`<p class="mut note">${esc(p.error)}</p>`:'';
+  return `<div class="xprof">${av}<div class="xmain"><div class="xhead">${badge}<b>${esc(u.name||p.handle)}</b> <a ${ext(p.link||('https://x.com/'+p.handle))}>@${esc(u.screen_name||p.handle)}</a></div><div class="mut">${esc(bits.join(' · '))} ${src}</div>${bio}${miss}</div></div>`;
+ }).join('');
+ return body+(conn?`<div class="xconn"><span class="mut">Connected</span>${conn}</div>`:'');
+}
 function xBadge(label){const cls=label==='Confirmed'?'ok':label==='Likely'?'warn':'';return `<span class="badge ${cls}">${esc(label)}</span>`}
 function renderX(){
  const el=$('#xmatch');if(!el||(!XREADY&&!XFUND.length&&!XMISS.length))return;
@@ -592,7 +621,10 @@ async function loadLinked(){
  const L=d.linked||[];ROUTES=L;GPS.linked=true;gpsTick();takeFunderMatches(L);if(!L.length){el.textContent='No direct transfers in the recent window.';return}
  el.innerHTML=L.map(a=>{
   const bits=[a.in?a.in+' in':'',a.out?a.out+' out':'',(a.sol_in+a.sol_out)?(a.sol_in+a.sol_out).toFixed(2)+' SOL':'',(a.usd_in+a.usd_out)?usd(a.usd_in+a.usd_out)+' USDC':''].filter(Boolean).join(' · ');
-  const tags=(a.label?`<span class="badge warn">${esc(a.label)}</span>`:'')+((a.identity||[]).map(t=>`<a class="badge" ${ext(t.link)}>${esc(t.label)}</a>`).join('')||(a.label?'':'<span class="mut">no public identity</span>'));
+  const xp=a.x_profile||{};
+  const idents=(a.identity||[]).filter(t=>!(xp.handle&&t.label==='X @'+xp.handle));
+  const xtag=xp.handle?`<a class="badge ok" ${ext(xp.link)} title="${esc(xp.source?('from '+xp.source):'')}">X @${esc(xp.handle)}</a>`+(xp.connected||[]).slice(0,3).map(c=>`<a class="badge" ${ext(c.link)}>${esc(c.label)}</a>`).join(''):'';
+  const tags=(a.label?`<span class="badge warn">${esc(a.label)}</span>`:'')+xtag+(idents.map(t=>`<a class="badge" ${ext(t.link)}>${esc(t.label)}</a>`).join('')||(a.label||xtag?'':'<span class="mut">no public identity</span>'));
   return `<div class="row"><span><a href="/?q=${encodeURIComponent(a.wallet)}"><code>${sh(a.wallet)}</code></a> <span class="mut">${esc(bits)}</span></span><span class="links">${tags} <a ${ext(a.first_tx_link)}>tx ↗</a></span></div>`;
  }).join('');
 }
