@@ -367,26 +367,56 @@ async def activity(w, kind="all", limit=50, before=None):
             res["theses"] = {"available": False, "note": "Fomo keeps theses private behind login (prod-api.fomo.family returns 'unauthorized' without a session)."}
         return res
 
+_coins = {}
+
+async def coin_meta(s, mint):
+    """pump.fun coin name, symbol, and image. Cached so a feed of repeated mints is one lookup each."""
+    if not mint: return {}
+    hit = _coins.get(mint)
+    if hit and time.time() - hit["t"] < 600: return hit
+    d = {}
+    try:
+        async with s.get(f"https://frontend-api-v3.pump.fun/coins-v2/{mint}") as r:
+            if r.status == 200: d = await r.json(content_type=None) or {}
+    except Exception:
+        d = {}
+    meta = {"name": d.get("name"), "symbol": d.get("symbol"), "image": d.get("image_uri"), "t": time.time()}
+    if meta["name"] or meta["symbol"] or meta["image"]:
+        _coins[mint] = meta
+        if len(_coins) > 500: _coins.pop(next(iter(_coins)))
+    return meta
+
 async def callouts(s, w, limit=50):
-    out = []
-    async with s.get(f"https://frontend-api-v3.pump.fun/callout/list/{w}?limit={min(limit, 50)}") as r:
+    calls, replies = [], []
+    cap = min(max(limit, 1), 50)
+    async with s.get(f"https://frontend-api-v3.pump.fun/callout/list/{w}?limit={cap}") as r:
         d = await r.json(content_type=None) if r.status == 200 else {}
     for c in (d or {}).get("callouts") or []:
-        out.append({"type": "callout", "mint": c.get("coinMint"), "text": c.get("thesis"), "ts": (c.get("createdAt") or 0) / 1000,
-                    "mcap": c.get("marketCap"), "multiple": c.get("multiple"), "max_multiple": c.get("maxMultiplier"), "likes": c.get("likes"),
-                    "link": f"https://pump.fun/coin/{c.get('coinMint')}"})
-    async with s.get(f"https://frontend-api-v3.pump.fun/callout/replies/list/{w}?limit={min(limit, 50)}") as r:
+        calls.append({"type": "callout", "mint": c.get("coinMint"), "text": c.get("thesis"), "ts": (c.get("createdAt") or 0) / 1000,
+                      "mcap": c.get("marketCap"), "multiple": c.get("multiple"), "max_multiple": c.get("maxMultiplier"), "likes": c.get("likes"),
+                      "link": f"https://pump.fun/coin/{c.get('coinMint')}"})
+    async with s.get(f"https://frontend-api-v3.pump.fun/callout/replies/list/{w}?limit={cap}") as r:
         d = await r.json(content_type=None) if r.status == 200 else {}
     import datetime
     for x in (d or {}).get("replies") or []:
         rp, co = x.get("reply") or {}, (x.get("callout") or {})
         ts = rp.get("createdAt")
-        try: ts = datetime.datetime.fromisoformat(ts.replace("Z", "+00:00")).timestamp()
+        try: ts = datetime.datetime.fromisoformat(str(ts).replace("Z", "+00:00")).timestamp()
         except Exception: ts = None
-        out.append({"type": "reply", "mint": co.get("coinMint"), "text": rp.get("content"), "ts": ts, "to": co.get("userName"),
-                    "link": f"https://pump.fun/coin/{co.get('coinMint')}"})
-    out.sort(key=lambda c: -(c["ts"] or 0))
-    return {"source": "frontend-api-v3.pump.fun /callout/list + /callout/replies/list", "items": out[:limit]}
+        replies.append({"type": "reply", "mint": co.get("coinMint"), "text": rp.get("content"), "ts": ts, "to": co.get("userName"),
+                        "link": f"https://pump.fun/coin/{co.get('coinMint')}"})
+    sem = asyncio.Semaphore(8)
+    async def one(m):
+        async with sem: return m, await coin_meta(s, m)
+    mints = [m for m in {c.get("mint") for c in calls + replies} if m]
+    meta = dict(await asyncio.gather(*[one(m) for m in mints])) if mints else {}
+    for c in calls + replies:
+        info = meta.get(c.get("mint")) or {}
+        c["name"], c["symbol"], c["image"] = info.get("name"), info.get("symbol"), info.get("image")
+    calls.sort(key=lambda c: -(c["ts"] or 0)); replies.sort(key=lambda c: -(c["ts"] or 0))
+    items = sorted(calls + replies, key=lambda c: -(c["ts"] or 0))
+    return {"source": "frontend-api-v3.pump.fun /callout/list + /callout/replies/list + /coins-v2",
+            "items": items[:limit], "calls": calls, "replies": replies}
 
 if __name__ == "__main__":
     import sys, json
