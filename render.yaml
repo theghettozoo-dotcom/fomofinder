@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: fomofinder
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT --proxy-headers
+    healthCheckPath: /healthz
+    envVars:
+      - key: RATE_PER_MIN
+        value: "10"
+      - key: X_BEARER_TOKEN
+        sync: false
+      - key: SOLANA_ARCHIVE_RPC_URL
+        sync: false
