@@ -1,45 +1,194 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>FomoFinder</title><meta name="description" content="FomoFinder: look up public info tied to a Solana wallet (pump.fun, X, .sol domains, holdings, wallet age)."><meta property="og:title" content="FomoFinder"><meta property="og:description" content="Look up public info tied to any Solana wallet."><meta name="twitter:title" content="FomoFinder"><meta name="application-name" content="FomoFinder"><meta name="theme-color" content="#07070a">
+<title>FomoFinder</title><meta name="description" content="FomoFinder: look up public info tied to a Solana wallet (pump.fun, X, .sol domains, holdings, wallet age)."><meta property="og:title" content="FomoFinder"><meta property="og:description" content="Look up public info tied to any Solana wallet."><meta name="twitter:title" content="FomoFinder"><meta name="application-name" content="FomoFinder"><meta name="theme-color" content="#07060b">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#07070a;--card:#111117;--line:#22222c;--mut:#8a8a99;--txt:#ededf2;--acc:#ff7a1a;--ok:#2bd67b;--warn:#ffb020}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(1200px 600px at 50% -10%,#24140a 0,var(--bg) 60%);color:var(--txt);font:15px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh}
-.wrap{max-width:980px;margin:0 auto;padding:48px 20px}
-h1{font-size:34px;letter-spacing:-.02em;margin:0 0 6px}h1 span{color:var(--acc)}.sub{color:var(--mut);margin:0 0 28px}
-form{display:flex;gap:10px}input{flex:1;background:#0d0d12;border:1px solid var(--line);color:var(--txt);padding:15px 18px;border-radius:14px;font:inherit;font-family:ui-monospace,Menlo,monospace;font-size:14px;outline:none}
-input:focus{border-color:var(--acc)}button{background:var(--acc);color:#111;border:0;border-radius:14px;padding:0 26px;font-weight:700;cursor:pointer;font-size:15px}
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:22px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 20px}
-.full{grid-column:1/-1}.hd{display:flex;gap:16px;align-items:center}.av{width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid var(--acc);background:#222}
-.k{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:flex;justify-content:space-between}
-.src{font-size:10px;letter-spacing:0;text-transform:none;color:#5d5d6b}.big{font-size:22px;font-weight:700}code{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;color:#d0d0dc;word-break:break-all}
-a{color:var(--acc);text-decoration:none}a:hover{text-decoration:underline}.row{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-top:1px solid var(--line)}.row:first-of-type{border-top:0}
-.pill{display:inline-block;padding:3px 10px;border-radius:99px;background:#1b1b23;border:1px solid var(--line);margin:3px 6px 3px 0;font-size:13px}
-.warn{color:var(--warn)}.mut{color:var(--mut)}.links a{display:inline-block;margin:4px 6px 4px 0;padding:7px 12px;border:1px solid var(--line);border-radius:10px;background:#0d0d12}
-#st{color:var(--mut);margin-top:16px}
-@media(max-width:700px){.wrap{padding:28px 14px}h1{font-size:26px}form{flex-direction:column}button{padding:14px}.grid{grid-template-columns:1fr}.row{flex-wrap:wrap}.row code{font-size:11px}.hd{align-items:flex-start}.av{width:52px;height:52px}}
-.spin{display:inline-block;width:14px;height:14px;border:2px solid #444;border-top-color:var(--acc);border-radius:50%;animation:s 1s linear infinite;vertical-align:-2px;margin-right:8px}@keyframes s{to{transform:rotate(360deg)}}
-</style></head><body><div class="wrap">
-<h1>Fomo<span>Finder</span></h1><p class="sub">Paste a Solana wallet, pump.fun profile link or username. Every fact links to its public source.</p>
-<form id="f"><input id="q" placeholder="Solana wallet · pump.fun URL · username" autocomplete="off"><button>Look up</button></form>
-<div id="st"></div><div id="out"></div></div>
+:root{--bg:#07060b;--card:rgba(16,14,26,.62);--line:rgba(255,255,255,.1);--mut:#9b97ad;--txt:#f5f2fb;--acc:#ff7a1a;--acc2:#ff3d8a;--cyan:#3ee0ff;--ok:#3dff9a;--warn:#ffc14d}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;min-height:100vh;display:flex;flex-direction:column;overflow-x:clip;color:var(--txt);font:15px/1.5 Outfit,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;background:#07060b}
+.aurora,.mesh{position:fixed;inset:0;pointer-events:none}
+.aurora{background:radial-gradient(900px 520px at 88% -8%,rgba(255,61,138,.32),transparent 58%),radial-gradient(760px 480px at -8% 8%,rgba(255,122,26,.26),transparent 52%),radial-gradient(680px 420px at 55% 115%,rgba(62,224,255,.14),transparent 55%)}
+.mesh{background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:72px 72px;mask-image:radial-gradient(ellipse at 50% 18%,#000 12%,transparent 72%)}
+.wrap{position:relative;z-index:1;flex:1;width:100%;max-width:1040px;margin:0 auto;padding:42px 22px 28px}
+.hero{animation:rise .6s cubic-bezier(.16,1,.3,1) both}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;margin:0 0 14px;color:var(--mut);font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase}
+.pulse{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 0 rgba(61,255,154,.7);animation:ping 2.2s ease-out infinite}
+h1{font-family:Syne,Outfit,sans-serif;font-weight:800;font-size:clamp(42px,7vw,68px);letter-spacing:-.045em;line-height:.92;margin:0 0 12px}
+h1 span{background:linear-gradient(105deg,#ffe08a,#ff7a1a 42%,#ff3d8a);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--mut);max-width:560px;margin:0 0 26px;font-size:16px}
+.search{display:flex;gap:8px;padding:7px;border-radius:20px;background:linear-gradient(180deg,rgba(22,18,34,.92),rgba(12,10,20,.92)) padding-box,linear-gradient(115deg,#ffb020,#ff5a1f 40%,#ff3d8a 72%,#3ee0ff) border-box;border:1.5px solid transparent;box-shadow:0 18px 70px rgba(255,61,138,.16),inset 0 1px 0 rgba(255,255,255,.08)}
+.search:focus-within{box-shadow:0 0 0 4px rgba(255,122,26,.16),0 18px 70px rgba(255,61,138,.22),inset 0 1px 0 rgba(255,255,255,.1)}
+.search input{flex:1;min-width:0;background:transparent;border:0;color:var(--txt);padding:14px 16px;font:15px/1.4 "JetBrains Mono",ui-monospace,Menlo,monospace;outline:none}
+.search input::placeholder{color:#6f6b80}
+.search button{border:0;border-radius:14px;padding:0 22px;font:700 15px/1 Outfit,sans-serif;color:#1a0c06;cursor:pointer;background:linear-gradient(100deg,#ffd27a,#ff7a1a 46%,#ff3d8a);box-shadow:0 8px 24px rgba(255,90,31,.35);transition:transform .18s ease,filter .18s ease}
+.search button:hover{transform:translateY(-1px) scale(1.03);filter:brightness(1.06)}
+.search button:active{transform:scale(.98)}
+#st{color:var(--mut);min-height:1.2em;margin-top:16px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:18px}
+.card{min-width:0;background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.025));background-color:var(--card);border:1px solid var(--line);border-radius:22px;padding:18px 18px 16px;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 16px 40px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.08);animation:rise .55s cubic-bezier(.16,1,.3,1) both;transition:transform .22s ease,border-color .22s ease,box-shadow .22s ease}
+.card:nth-child(2){animation-delay:.04s}.card:nth-child(3){animation-delay:.08s}.card:nth-child(4){animation-delay:.12s}.card:nth-child(5){animation-delay:.16s}.card:nth-child(6){animation-delay:.2s}.card:nth-child(7){animation-delay:.24s}.card:nth-child(8){animation-delay:.28s}.card:nth-child(9){animation-delay:.32s}
+.card:hover{transform:translateY(-3px);border-color:rgba(255,122,26,.45);box-shadow:0 18px 48px rgba(0,0,0,.38),0 0 0 1px rgba(255,122,26,.12),inset 0 1px 0 rgba(255,255,255,.1)}
+.full{grid-column:1/-1}
+.k{display:flex;align-items:center;gap:8px;color:var(--mut);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
+.kt{color:var(--txt)}.src{margin-left:auto;font-size:10px;font-weight:500;letter-spacing:0;text-transform:none;color:#6d687c;text-align:right;max-width:46%}
+.hd{display:flex;gap:16px;align-items:center;min-width:0}.hd>div{min-width:0;flex:1}.av{width:68px;height:68px;border-radius:50%;object-fit:cover;border:2px solid transparent;background:linear-gradient(#111,#111) padding-box,linear-gradient(140deg,#ffb020,#ff3d8a) border-box;box-shadow:0 0 24px rgba(255,61,138,.25);flex:none}
+.big{font-family:Syne,Outfit,sans-serif;font-size:26px;font-weight:800;letter-spacing:-.03em;line-height:1.1;overflow-wrap:anywhere}
+code,.addr{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-size:12.5px;color:#ddd6f0;word-break:break-all;overflow-wrap:anywhere;max-width:100%}
+.addr{display:block;width:fit-content;max-width:100%;margin-top:4px;padding:3px 8px;border-radius:8px;background:rgba(0,0,0,.28);border:1px solid var(--line)}
+a{color:var(--acc);text-decoration:none}a:hover{text-decoration:underline}
+.row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid rgba(255,255,255,.06);align-items:center}.row:first-of-type{border-top:0}
+.row>*{min-width:0;max-width:100%}
+.row a{display:inline-flex;align-items:center;gap:6px;min-width:0}
+.row>span:first-child{color:var(--mut)}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;background:rgba(255,255,255,.045);border:1px solid var(--line);margin:3px 6px 3px 0;font-size:13px;font-weight:600;color:var(--txt);transition:transform .18s ease,border-color .18s ease,background .18s ease}
+a.badge:hover{text-decoration:none;transform:translateY(-1px);border-color:rgba(255,122,26,.6);background:rgba(255,122,26,.08)}
+.badge.warn{color:var(--warn);border-color:rgba(255,193,77,.35)}
+.badge.ok{color:#04140c;background:linear-gradient(100deg,#e7fff2,#3dff9a);border-color:transparent;box-shadow:0 0 18px rgba(61,255,154,.28)}
+.badge.pos{color:#04140c;background:#3dff9a;border-color:transparent}
+.badge.neg{color:#2a0608;background:#ff8b96;border-color:transparent}
+.badge.neutral{color:var(--mut)}
+.ico{width:15px;height:15px;object-fit:contain;flex:none;display:block}
+.mark{width:22px;height:22px;object-fit:contain;flex:none;display:block;filter:drop-shadow(0 0 8px rgba(95,203,136,.25))}
+.ico.fomo,.mark.fomo{border-radius:5px;filter:none}
+.warn{color:var(--warn)}.mut{color:var(--mut)}.note{font-size:12px;margin-top:8px}
+.links{display:flex;flex-wrap:wrap;gap:8px}
+.linkbtn{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.04);color:var(--txt);font-weight:600;font-size:13px;transition:transform .18s ease,border-color .18s ease,background .18s ease}
+.linkbtn:hover{text-decoration:none;transform:translateY(-2px);border-color:rgba(255,122,26,.55);background:rgba(255,122,26,.1)}
+.arr{color:var(--acc)}
+/* Reusable shells for later sections: tabs, stat tiles, scrollable activity. */
+.tabs{display:flex;gap:4px;width:100%;max-width:100%;padding:4px;border-radius:14px;background:rgba(0,0,0,.28);border:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:none;border:0;background:transparent;color:var(--mut);font:600 13px/1 Outfit,sans-serif;padding:8px 12px;border-radius:10px;cursor:pointer;white-space:nowrap}
+.tab[aria-selected="true"],.tab.active{color:#1a0c06;background:linear-gradient(100deg,#ffd27a,#ff7a1a 50%,#ff3d8a)}
+.tabpanel{margin-top:12px}
+.scroll{max-height:340px;overflow:auto;border-radius:14px;border:1px solid var(--line)}
+.statgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.stat{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:14px;padding:12px}
+.stat b{display:block;margin-top:4px;font-family:Syne,Outfit,sans-serif;font-size:22px;letter-spacing:-.03em}
+.stat>span{color:var(--mut);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.stat.up{box-shadow:inset 0 0 0 1px rgba(61,255,154,.18)}
+.stat.down{box-shadow:inset 0 0 0 1px rgba(255,93,108,.2)}
+.stat.up b{color:var(--ok)}.stat.down b{color:#ff5d6c}
+.stat .meta{margin-top:4px;color:var(--mut);font-size:12px;line-height:1.35}
+.stat .badge{margin-top:8px;letter-spacing:0;text-transform:none;font-size:11px}
+.partial{color:var(--warn);font-style:normal}
+.buy{color:var(--ok);font-weight:800}.sell{color:#ff5d6c;font-weight:800}
+.it{display:flex;gap:12px;justify-content:space-between;align-items:center;padding:10px 2px;border-bottom:1px solid rgba(255,255,255,.06);font-size:13.5px}
+.it .l{min-width:0}.it .r{flex:none;text-align:right;white-space:nowrap}
+.scroll{padding:2px 10px;background:rgba(0,0,0,.28)}
+.more{display:block;width:100%;margin-top:12px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--txt);border-radius:12px;padding:11px;font:700 13px Outfit,sans-serif;cursor:pointer;transition:border-color .18s,background .18s}
+.more:hover{border-color:rgba(255,122,26,.55);background:rgba(255,122,26,.1)}
+.card.act:hover{transform:none}
+.tags{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;align-items:center}
+.foot{position:relative;z-index:1;padding:8px 16px 28px;text-align:center;border-top:1px solid rgba(255,255,255,.06)}
+.foot a{display:inline-flex;flex-direction:column;align-items:center;gap:8px;color:var(--mut);text-decoration:none}
+.foot a:hover{color:var(--txt);text-decoration:none}
+.foot img.brand{width:min(240px,70vw);height:auto;display:block}
+.credit{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:700;letter-spacing:.16em;line-height:1;white-space:nowrap}
+.credit svg{width:12px;height:12px;fill:currentColor;flex:none}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid #444;border-top-color:var(--acc);border-radius:50%;animation:s .8s linear infinite;vertical-align:-2px;margin-right:8px}
+@keyframes s{to{transform:rotate(360deg)}}
+@keyframes rise{from{opacity:0;translate:0 14px}to{opacity:1;translate:0 0}}
+@keyframes ping{0%{box-shadow:0 0 0 0 rgba(61,255,154,.55)}70%{box-shadow:0 0 0 8px rgba(61,255,154,0)}100%{box-shadow:0 0 0 0 rgba(61,255,154,0)}}
+@media(max-width:700px){
+.wrap{padding:28px 14px 16px}h1{font-size:40px}.sub{font-size:14.5px}
+.search{flex-direction:column;padding:6px}.search button{padding:14px}
+.grid{grid-template-columns:1fr}.statgrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.card,.scroll,.tabs,.it,.row,.stat{min-width:0;max-width:100%}
+.row{flex-wrap:wrap;align-items:flex-start}.row code{font-size:11px}.hd{align-items:flex-start}.av{width:54px;height:54px}
+.it{flex-direction:column;align-items:flex-start;gap:4px}.it .r{white-space:normal;text-align:left}
+.tags{justify-content:flex-start}
+.src{max-width:42%}.foot{padding:4px 12px 22px}.credit{letter-spacing:.1em}
+.stat b{font-size:18px}
+}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;scroll-behavior:auto!important}.card:hover,.search button:hover,.linkbtn:hover,a.badge:hover{transform:none}}
+</style></head><body>
+<div class="aurora" aria-hidden="true"></div><div class="mesh" aria-hidden="true"></div>
+<div class="wrap">
+<header class="hero">
+<p class="eyebrow"><span class="pulse" aria-hidden="true"></span>Solana identity</p>
+<h1>Fomo<span>Finder</span></h1>
+<p class="sub">Paste a Solana wallet, pump.fun profile link or username. Every fact links to its public source.</p>
+<form id="f" class="search"><input id="q" placeholder="Solana wallet · pump.fun URL · username" autocomplete="off" enterkeyhint="search"><button type="submit">Look up</button></form>
+</header>
+<div id="st" role="status"></div><div id="out"></div>
+</div>
+<footer class="foot"><a href="https://x.com/Z00VIE" target="_blank" rel="noopener"><img class="brand" src="/static/goers.webp" alt="Goers &amp; Blowerz" width="400" height="233"><span class="credit"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.259-6.874L7.73 21.75H4.42l7.727-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>MADE BY @Z00VIE</span></a></footer>
 <script>
 const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const usd=v=>v==null?'':'$'+Number(v).toLocaleString(undefined,{maximumFractionDigits:0});
 const day=t=>t?new Date(t*1000).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}):'?';
-const card=(k,src,body,cls='')=>`<div class="card ${cls}"><div class="k">${k}<span class="src">${esc(src||'')}</span></div>${body}</div>`;
-async function go(q){$('#st').innerHTML='<span class=spin></span>Looking up… (up to ~15s for busy wallets)';$('#out').innerHTML='';history.replaceState(null,'','?q='+encodeURIComponent(q));document.title='FomoFinder · '+q.slice(0,8);
+const brandOf=n=>{const s=String(n||'').toLowerCase();return s.includes('pump.fun')?'pump':s.includes('fomo')?'fomo':''};
+const icon=kind=>kind==='pump'?'/static/pump-logomark.svg':kind==='fomo'?'/static/fomo-icon.png':'';
+const img=(kind,cls)=>icon(kind)?`<img class="${cls}${kind==='fomo'?' fomo':''}" src="${icon(kind)}" alt="">`:'';
+const card=(title,src,body,cls='',brand='')=>`<article class="card ${cls}"><div class="k">${img(brand,'mark')}<span class="kt">${title}</span><span class="src">${esc(src||'')}</span></div>${body}</article>`;
+const badge=n=>{const s=String(n),b=brandOf(s),cls=s.includes('unverified')?' warn':/on-chain|verified/.test(s)?' ok':'';return `<span class="badge${cls}">${img(b,'ico')}${esc(s)}</span>`};
+const ext=href=>`href="${esc(href)}" target="_blank" rel="noopener"`;
+const linkbtn=(name,url)=>`<a class="linkbtn" ${ext(url)}>${img(brandOf(name),'ico')}${esc(name)} <span class="arr">↗</span></a>`;
+async function go(q){$('#st').innerHTML='<span class=spin></span>Looking up… (busy wallets can take ~20s)';$('#out').innerHTML='';history.replaceState(null,'','?q='+encodeURIComponent(q));document.title='FomoFinder · '+q.slice(0,8);
  let r;try{r=await (await fetch('/api/lookup?q='+encodeURIComponent(q))).json()}catch(e){$('#st').textContent='Lookup failed, try again.';return}if(r.error||r.detail){$('#st').textContent=r.error||r.detail;return}$('#st').textContent='';
  const p=r.pump||{},x=r.x||{},d=r.domains||{},h=r.holdings||{},hi=r.history||{},f=r.fomo||{};let o='<div class="grid">';const k=r.kolscan||{};
- o+=card('Found on','',(r.found_on||[]).length?r.found_on.map(n=>`<span class="pill${n.includes('unverified')?' warn':''}">${esc(n)}</span>`).join(''):'<span class="mut">No public identity found</span>','full');
- o+=card('Wallet','',`<div class="hd">${p.image?`<img class="av" src="${esc(p.image)}">`:''}<div><div class="big">${esc(p.username||d.primary||'Unknown wallet')}</div><code>${r.wallet}</code>${p.bio?`<div class="mut">${esc(p.bio)}</div>`:''}</div></div>`,'full');
- o+=card('pump.fun',r.pump?'frontend-api-v3.pump.fun':'',r.pump?`<div class="row"><span>Profile</span><a href="${p.link}" target=_blank>${esc(p.username)}</a></div><div class="row"><span>Followers</span><b>${(p.followers||0).toLocaleString()}</b></div><div class="row"><span>Following</span><b>${(p.following||0).toLocaleString()}</b></div><div class="row"><span>Linked EVM</span><code>${esc(p.evm_wallet||'—')}</code></div><div class="row"><span>Coins created</span><b>${p.coins_created.length}</b></div>${p.coins_created.slice(0,5).map(c=>`<div class="row"><a href="${c.link}" target=_blank>$${esc(c.symbol)}</a><code>${c.mint}</code></div>`).join('')}`:'<span class="mut">No pump.fun profile</span>');
- o+=card('X / Twitter',x.source,(x.handle?`<div class="row"><span>Account</span><a href="${x.link}" target=_blank>@${esc(x.handle)}</a></div>${x.profile?`<div class="row"><span>Followers</span><b>${x.profile.public_metrics.followers_count.toLocaleString()}</b></div>`:''}`:'<span class="mut">No linked X account</span>')+`${(x.mentions||[]).map(m=>`<div class="row"><a href="${m.link}" target=_blank>@${esc(m.handle)}</a><span class="mut">${esc(m.text.slice(0,60))}</span></div>`).join('')}<div class="row"><span>Posts mentioning wallet</span><a href="${x.search_link}" target=_blank>search X ↗</a></div>${x.handle?`<div class="row"><span>Posts by/about @${esc(x.handle)}</span><a href="https://x.com/search?q=${encodeURIComponent('@'+x.handle)}&f=live" target=_blank>search X ↗</a></div>`:''}${x.note?`<div class="mut" style="font-size:12px">Live X search needs an API key on this server.</div>`:''}`);
- const st=(k.stats||{})['1']||Object.values(k.stats||{})[0];
- o+=card('KOLscan',`${k.tracked_kols||0} tracked KOLs`,k.is_kol?`<div class="row"><span>KOL</span><a href="${k.link}" target=_blank>${esc(k.name)}</a></div>${k.twitter?`<div class="row"><span>X</span><a href="${esc(k.twitter)}" target=_blank>${esc(k.twitter.split('/').pop())}</a></div>`:''}${Object.entries(k.stats||{}).map(([tf,s])=>`<div class="row"><span>${tf==='1'?'Today':tf+'d'}</span><b>#${s.rank} · ${s.profit_sol>=0?'+':''}${s.profit_sol.toFixed(1)} SOL · ${s.wins}W/${s.losses}L</b></div>`).join('')}`:`<span class="mut">Not a KOLscan-tracked wallet</span>${(k.same_x_handle_kol_wallets||[]).map(a=>`<div class="row"><span>KOL with same X handle</span><a href="${a.link}" target=_blank>${esc(a.name)}</a></div>`).join('')}`);
- o+=card('Domains',d.source,d.domains&&d.domains.length?d.domains.map((n,i)=>`<a class="pill" href="${d.links[i]}" target=_blank>${esc(n)}${n===d.primary?' ★':''}</a>`).join(''):'<span class="mut">No .sol domains</span>');
- o+=card('Wallet age & funding','Solana RPC',hi.complete?`<div class="row"><span>First tx</span><a href="${hi.first_tx_link}" target=_blank>${day(hi.first_seen)}</a></div><div class="row"><span>Transactions</span><b>${hi.tx_count}</b></div>${hi.first_fee_payer?`<div class="row"><span>Gas paid by</span><a href="${hi.first_fee_payer_link}" target=_blank><code>${hi.first_fee_payer.slice(0,8)}…</code></a></div><div class="mut" style="font-size:12px">${esc(hi.funding_note)}</div>`:''}${hi.funded_by?`<div class="row"><span>Funded by</span><a href="${hi.funded_by_link}" target=_blank><code>${hi.funded_by.slice(0,8)}…</code></a> ${hi.funded_sol.toFixed(3)} SOL</div>`:''}`:`<div class="row"><span>Active since at least</span><b>${day(hi.oldest_seen)}</b></div><div class="row"><span>Transactions</span><b>${(hi.tx_count_min||0).toLocaleString()}+</b></div><div class="mut" style="font-size:12px">Too many txs to reach the first one on a free RPC.</div>`);
- o+=card('Holdings','RPC + Jupiter',`<div class="row"><span>SOL</span><b>${h.sol==null?'?':h.sol.toFixed(3)} ${h.sol_usd?'<span class=mut>'+usd(h.sol_usd)+'</span>':''}</b></div><div class="row"><span>Tokens</span><b>${h.token_count}</b></div>${(h.top||[]).filter(t=>t.symbol).slice(0,5).map(t=>`<div class="row"><a href="${t.link}" target=_blank>$${esc(t.symbol)}</a><span>${usd(t.usd)}</span></div>`).join('')}`);
- o+=card('Fomo','',f.guess_link?`<div class="row"><a href="${f.guess_link}" target=_blank>${esc(f.guess_link.replace('https://',''))}</a><span class="warn">⚠ unverified guess</span></div><div class="mut" style="font-size:12px">${esc(f.note)}</div>`:`<span class="mut">${esc(f.note)}</span>`);
- o+=card('Explore','',`<div class="links">${Object.entries(r.links).map(([k,u])=>`<a href="${u}" target=_blank>${k} ↗</a>`).join('')}</div>`,'full');
- $('#out').innerHTML=o+'</div>'}
-$('#f').onsubmit=e=>{e.preventDefault();go($('#q').value.trim())};const q0=new URLSearchParams(location.search).get('q');if(q0){$('#q').value=q0;go(q0)}
+ o+=card('Found on','',(r.found_on||[]).length?r.found_on.map(badge).join(''):'<span class="mut">No public identity found</span>','full');
+ o+=card('Wallet','',`<div class="hd">${p.image?`<img class="av" src="${esc(p.image)}" alt="">`:''}<div><div class="big">${esc(p.username||d.primary||'Unknown wallet')}</div><code class="addr">${r.wallet}</code>${p.bio?`<div class="mut">${esc(p.bio)}</div>`:''}</div></div>`,'full');
+ o+=card('pump.fun',r.pump?'frontend-api-v3.pump.fun':'',r.pump?`<div class="row"><span>Profile</span><a ${ext(p.link)}>${img('pump','ico')}${esc(p.username)}</a></div><div class="row"><span>Followers</span><b>${(p.followers||0).toLocaleString()}</b></div><div class="row"><span>Following</span><b>${(p.following||0).toLocaleString()}</b></div><div class="row"><span>Linked EVM</span><code>${esc(p.evm_wallet||'—')}</code></div><div class="row"><span>Coins created</span><b>${p.coins_created.length}</b></div>${p.coins_created.slice(0,5).map(c=>`<div class="row"><a ${ext(c.link)}>${img('pump','ico')}$${esc(c.symbol)}</a><code>${c.mint}</code></div>`).join('')}`:'<span class="mut">No pump.fun profile</span>','','pump');
+ const xBody=(x.handle?`<div class="row"><span>Account</span><a ${ext(x.link)}>@${esc(x.handle)}</a></div>${x.profile?`<div class="row"><span>Followers</span><b>${x.profile.public_metrics.followers_count.toLocaleString()}</b></div>`:''}`:'<span class="mut">No linked X account</span>')
+  +`${(x.mentions||[]).map(m=>`<div class="row"><a ${ext(m.link)}>@${esc(m.handle)}</a><span class="mut">${esc(m.text.slice(0,60))}</span></div>`).join('')}<div class="row"><span>Posts mentioning wallet</span><a ${ext(x.search_link)}>search X ↗</a></div>${x.handle?`<div class="row"><span>Posts by/about @${esc(x.handle)}</span><a ${ext('https://x.com/search?q='+encodeURIComponent('@'+x.handle)+'&f=live')}>search X ↗</a></div>`:''}${x.note?`<div class="mut note">Live X search needs an API key on this server.</div>`:''}`;
+ o+=card('X / Twitter',x.source,xBody);
+ o+=card('KOLscan',`${k.tracked_kols||0} tracked KOLs`,k.is_kol?`<div class="row"><span>KOL</span><a ${ext(k.link)}>${esc(k.name)}</a></div>${k.twitter?`<div class="row"><span>X</span><a ${ext(k.twitter)}>${esc(k.twitter.split('/').pop())}</a></div>`:''}${Object.entries(k.stats||{}).map(([tf,s])=>`<div class="row"><span>${tf==='1'?'Today':tf+'d'}</span><b>#${s.rank} · ${s.profit_sol>=0?'+':''}${s.profit_sol.toFixed(1)} SOL · ${s.wins}W/${s.losses}L</b></div>`).join('')}`:`<span class="mut">Not a KOLscan-tracked wallet</span>${(k.same_x_handle_kol_wallets||[]).map(a=>`<div class="row"><span>KOL with same X handle</span><a ${ext(a.link)}>${esc(a.name)}</a></div>`).join('')}`);
+ o+=card('Domains',d.source,d.domains&&d.domains.length?d.domains.map((n,i)=>`<a class="badge" ${ext(d.links[i])}>${esc(n)}${n===d.primary?' ★':''}</a>`).join(''):'<span class="mut">No .sol domains</span>');
+ o+=card('Wallet age & funding','Solana RPC',hi.complete?`<div class="row"><span>First tx</span><a ${ext(hi.first_tx_link)}>${day(hi.first_seen)}</a></div><div class="row"><span>Transactions</span><b>${hi.tx_count}</b></div>${hi.first_fee_payer?`<div class="row"><span>Gas paid by</span><a ${ext(hi.first_fee_payer_link)}><code>${hi.first_fee_payer.slice(0,8)}…</code></a></div><div class="mut note">${esc(hi.funding_note)}</div>`:''}${hi.funded_by?`<div class="row"><span>Funded by</span><a ${ext(hi.funded_by_link)}><code>${hi.funded_by.slice(0,8)}…</code></a> ${hi.funded_sol.toFixed(3)} SOL</div>`:''}`:`<div class="row"><span>Active since at least</span><b>${day(hi.oldest_seen)}</b></div><div class="row"><span>Transactions</span><b>${(hi.tx_count_min||0).toLocaleString()}+</b></div><div class="mut note">Too many txs to reach the first one on a free RPC.</div>`);
+ o+=card('Holdings','RPC + Jupiter',`<div class="row"><span>SOL</span><b>${h.sol==null?'?':h.sol.toFixed(3)} ${h.sol_usd?'<span class=mut>'+usd(h.sol_usd)+'</span>':''}</b></div><div class="row"><span>Tokens</span><b>${h.token_count}</b></div>${(h.top||[]).filter(t=>t.symbol).slice(0,5).map(t=>`<div class="row"><a ${ext(t.link)}>$${esc(t.symbol)}</a><span>${usd(t.usd)}</span></div>`).join('')}`);
+ o+=card('Fomo',f.verified?'on-chain':'',fomoBody(f),'','fomo');
+ o+=card('PnL (realized)','computed from recent swaps','<div id="pnl" class="mut"><span class=spin></span>Loading…</div>','full');
+ o+=card('Linked wallets','transfers in recent txs','<div id="linked" class="mut"><span class=spin></span>Loading…</div>','full');
+ o+=`<article class="card full act"><div class="k"><span class="kt">Activity</span><span class="src">latest 50 · scroll</span></div><div class="tabs" role="tablist">${[['tx','Swaps'],['transfers','Transfers'],['callouts','pump.fun callouts'],['theses','Fomo theses']].map(([k,l])=>`<button type="button" class="tab" role="tab" data-t="${k}" aria-selected="false">${l}</button>`).join('')}</div><div id="actbox" class="scroll" role="tabpanel"></div><button type="button" class="more" id="more" hidden>Load more</button></article>`;
+ o+=card('Explore','',`<div class="links">${Object.entries(r.links).map(([name,url])=>linkbtn(name,url)).join('')}</div>`,'full');
+ $('#out').innerHTML=o+'</div>';CUR=r.wallet;document.querySelectorAll('.tabs .tab').forEach(b=>b.onclick=()=>tab(b.dataset.t));$('#more').onclick=()=>tab(TAB,true);tab('tx');loadPnl();loadLinked()}
+function fomoBody(f){
+ if(f.verified) return `<div class="row"><span>Fomo wallet</span><span class="badge ok">${img('fomo','ico')}✅ verified on-chain</span></div><div class="note">${esc(f.evidence)} · <a ${ext(f.example_link)}>example tx ↗</a> · <a ${ext(f.signer_link)}>signer ↗</a></div><div class="note">${esc(f.note)}</div>${f.guess_link?`<div class="row"><a class="linkbtn" ${ext(f.guess_link)}>${img('fomo','ico')}${esc(f.guess_link.replace('https://',''))}</a><span class="badge warn">⚠ handle unverified</span></div>`:''}`;
+ if(f.guess_link) return `<a class="linkbtn" ${ext(f.guess_link)}>${img('fomo','ico')}${esc(f.guess_link.replace('https://',''))}</a> <span class="badge warn">⚠ unverified guess</span><div class="mut note">${esc(f.note)}</div>`;
+ return `<span class="mut">${esc(f.note||'')}</span>`;
+}
+let CUR=null,TAB='tx',BEFORE=null;
+const ago=t=>{if(!t)return'';const s=Date.now()/1000-t;return s<3600?Math.max(1,Math.round(s/60))+'m':s<86400?Math.round(s/3600)+'h':Math.round(s/86400)+'d'};
+const sh=a=>a?a.slice(0,4)+'…'+a.slice(-4):'';
+async function api(t,extra=''){const r=await fetch('/api/activity?q='+encodeURIComponent(CUR)+'&type='+t+extra);return r.json()}
+async function tab(t,more){
+ TAB=t;document.querySelectorAll('.tabs .tab').forEach(b=>b.setAttribute('aria-selected',b.dataset.t===t?'true':'false'));
+ const box=$('#actbox');if(!more){box.innerHTML='<div class="mut" style="padding:12px 4px"><span class=spin></span>Loading…</div>';BEFORE=null}
+ let d;try{d=await api(t,BEFORE?'&before='+BEFORE:'')}catch(e){box.innerHTML='<div class="mut" style="padding:12px 4px">Activity failed, try again.</div>';return}
+ if(d.error){box.innerHTML=`<div class="mut" style="padding:12px 4px">${esc(d.error)}</div>`;return}
+ let h='',last=null;
+ if(t==='tx')(d.swaps||[]).forEach(s=>{last=s.ts;h+=`<div class="it"><span class="l"><b class="${s.side}">${esc(s.side.toUpperCase())}</b> <a ${ext('https://dexscreener.com/solana/'+s.mint)}>$${esc(s.symbol||sh(s.mint))}</a> <span class="mut">${esc(s.venue||'')}</span></span><span class="r">${usd(s.usd_est)} <span class="mut">${s.sol?s.sol.toFixed(2)+' SOL':''}</span> <a ${ext(s.link)}>${ago(s.ts)} ↗</a></span></div>`});
+ if(t==='transfers')(d.transfers||[]).forEach(x=>{last=x.ts;const tok=String(x.token||'');h+=`<div class="it"><span class="l"><b class="${x.dir==='in'?'buy':'sell'}">${x.dir==='in'?'IN':'OUT'}</b> ${Number(x.amount).toLocaleString(undefined,{maximumFractionDigits:4})} ${esc(tok.length>10?sh(tok):tok)} ${x.dir==='in'?'from':'to'} <a ${ext('https://solscan.io/account/'+x.counterparty)}>${sh(x.counterparty)}</a></span><span class="r"><a ${ext(x.link)}>${ago(x.ts)} ↗</a></span></div>`});
+ if(t==='callouts'){const it=(d.callouts||{}).items||[];it.forEach(c=>{h+=`<div class="it"><span class="l"><span class="badge">${img('pump','ico')}${esc(c.type)}</span> <a ${ext(c.link)}>${sh(c.mint)}</a> ${esc((c.text||'').slice(0,140))}</span><span class="r mut">${ago(c.ts)}</span></div>`});if(!it.length)h='<div class="mut" style="padding:12px 4px">No public pump.fun callouts or replies.</div>'}
+ if(t==='theses')h=`<div class="mut" style="padding:12px 4px">${esc((d.theses||{}).note||'')}</div>`;
+ if(!h)h='<div class="mut" style="padding:12px 4px">Nothing in the recent history window.</div>';
+ if(more)box.insertAdjacentHTML('beforeend',h);else box.innerHTML=h;
+ BEFORE=last;const moreBtn=$('#more');if(moreBtn)moreBtn.hidden=!(last&&(t==='tx'||t==='transfers'));
+}
+async function loadPnl(){
+ const el=$('#pnl');let d;try{d=await api('pnl')}catch(e){el.textContent='PnL failed, try again.';return}
+ if(d.error){el.textContent=d.error;return}
+ const c=d.coverage||{};
+ el.innerHTML=`<div class="statgrid">${Object.entries(d.pnl||{}).map(([k,p])=>{
+  const v=p.realized_usd||0,cls=v>0?'up':v<0?'down':'';
+  const sol=p.realized_sol==null?'':(p.realized_sol>=0?'+':'')+p.realized_sol.toFixed(2)+' SOL · ';
+  const wr=p.win_rate==null?'–':Math.round(p.win_rate*100)+'%';
+  const b=p.badge==='profitable'?'pos':p.badge==='unprofitable'?'neg':'neutral';
+  return `<div class="stat ${cls}"><span>${k}${p.partial?' · <i class="partial">partial</i>':''}</span><b>${v>=0?'+':'−'}${usd(Math.abs(v))}</b><div class="meta">${sol}${p.trades} trades · win ${wr}</div><span class="badge ${b}">${esc(p.badge)}</span></div>`;
+ }).join('')}</div><div class="mut note">Realized PnL from the last ${c.txs_parsed??0} txs${c.oldest_ts?' (back to '+day(c.oldest_ts)+')':''}. Windows marked partial go further back than that. SOL valued at today's price. Estimate only.</div>`;
+}
+async function loadLinked(){
+ const el=$('#linked');let d;try{d=await api('linked')}catch(e){el.textContent='Linked wallets failed, try again.';return}
+ if(d.error){el.textContent=d.error;return}
+ const L=d.linked||[];if(!L.length){el.textContent='No direct transfers in the recent window.';return}
+ el.innerHTML=L.map(a=>{
+  const bits=[a.in?a.in+' in':'',a.out?a.out+' out':'',(a.sol_in+a.sol_out)?(a.sol_in+a.sol_out).toFixed(2)+' SOL':'',(a.usd_in+a.usd_out)?usd(a.usd_in+a.usd_out)+' USDC':''].filter(Boolean).join(' · ');
+  const tags=(a.label?`<span class="badge warn">${esc(a.label)}</span>`:'')+((a.identity||[]).map(t=>`<a class="badge" ${ext(t.link)} title="${esc(t.strength)}">${img(brandOf(t.label),'ico')}${esc(t.label)}</a>`).join('')||(a.label?'':'<span class="mut">no public identity</span>'));
+  return `<div class="row"><span><a href="/?q=${encodeURIComponent(a.wallet)}"><code>${sh(a.wallet)}</code></a> <span class="mut">${esc(bits)}</span></span><span class="tags">${tags} <a ${ext(a.first_tx_link)}>tx ↗</a></span></div>`;
+ }).join('');
+}
+$('#f').onsubmit=e=>{e.preventDefault();const q=$('#q').value.trim();if(q)go(q)};
+const q0=new URLSearchParams(location.search).get('q');if(q0){$('#q').value=q0;go(q0)}
 </script></body></html>
