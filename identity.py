@@ -13,6 +13,18 @@ async def _get(s, url, **kw):
             return await r.json(content_type=None) if r.status == 200 else None
     except Exception: return None
 
+async def _get_retry(s, url, tries=4):
+    """Retry rate limits and blips. None means the request failed; an empty list is a real empty result."""
+    for i in range(tries):
+        try:
+            async with s.get(url, headers=UA) as r:
+                if r.status == 200: return await r.json(content_type=None)
+                if r.status not in (429, 500, 502, 503, 504): return None
+        except Exception:
+            pass
+        await asyncio.sleep(0.8 * (2 ** i))
+    return None
+
 async def _rpc(s, method, params, url=None):
     for i in range(4):
         try:
@@ -33,15 +45,35 @@ async def resolve_input(s, q):
 async def pump_section(s, w, prof):
     prof = prof or await _get(s, f"{PUMP}/users/{w}")
     if not isinstance(prof, dict): prof = None
-    coins = await _get(s, f"{PUMP}/coins?creator={w}&offset=0&limit=20&includeNsfw=true&sort=created_timestamp&order=DESC") or []
-    if not isinstance(coins, list): coins = []
-    if not prof and not coins: return None
+    raw, coins_error = [], False
+    for offset in range(0, 100, 20):
+        batch = await _get_retry(s, f"{PUMP}/coins?creator={w}&offset={offset}&limit=20&includeNsfw=true&sort=created_timestamp&order=DESC")
+        if not isinstance(batch, list):
+            coins_error = True
+            break
+        if not batch: break
+        raw.extend(batch)
+        if len(batch) < 20: break
+    coins = []
+    seen = set()
+    for c in raw:
+        if c.get("creator") != w or not c.get("mint") or c["mint"] in seen: continue
+        seen.add(c["mint"])
+        ts = c.get("created_timestamp") or 0
+        if ts > 10**11: ts /= 1000
+        coins.append({"mint": c["mint"], "name": c.get("name"), "symbol": c.get("symbol"), "image": c.get("image_uri"),
+                      "created": ts or None, "mcap": c.get("usd_market_cap") if c.get("usd_market_cap") is not None else c.get("market_cap_usd"),
+                      "ath_mcap": c.get("ath_market_cap"), "graduated": bool(c.get("complete")),
+                      "link": f"https://pump.fun/coin/{c['mint']}"})
+    if not prof and not coins and not coins_error: return None
     p = prof or {}
+    unavailable = coins_error and not coins
     return {"source": f"{PUMP}/users/{w}", "username": p.get("username"), "bio": p.get("bio"), "followers": p.get("followers"),
             "following": p.get("following"), "x_username": p.get("x_username"), "evm_wallet": p.get("canonical_evm_wallet"),
             "image": p.get("profile_image"), "link": f"https://pump.fun/profile/{w}",
-            "coins_created": [{"mint": c["mint"], "name": c.get("name"), "symbol": c.get("symbol"), "link": f"https://pump.fun/coin/{c['mint']}"}
-                              for c in coins if c.get("creator") == w]}
+            "coins_created": coins, "coins_devved": None if unavailable else len(coins),
+            "coins_graduated": None if unavailable else sum(1 for c in coins if c["graduated"]),
+            "coins_unavailable": unavailable}
 
 async def sns_section(s, w):
     fav = await _get(s, f"https://sdk-proxy.sns.id/favorite-domain/{w}")
@@ -237,7 +269,8 @@ def to_html(r):
         L.append(f"\n<b>pump.fun</b>: <a href=\"{p['link']}\">{H.escape(p.get('username') or w[:6])}</a> · {p.get('followers') or 0:,} followers")
         if p.get("bio"): L.append(f"Bio: {H.escape(p['bio'])}")
         if p.get("evm_wallet"): L.append(f"EVM: <code>{p['evm_wallet']}</code>")
-        L.append(f"Coins created: {len(p['coins_created'])}" + "".join(f"\n  • <a href=\"{c['link']}\">${H.escape(c.get('symbol') or '?')}</a> <code>{c['mint']}</code>" for c in p["coins_created"][:5]))
+        if p.get("coins_unavailable"): L.append("Coins created: lookup failed")
+        else: L.append(f"Coins created: {len(p['coins_created'])}" + "".join(f"\n  • <a href=\"{c['link']}\">${H.escape(c.get('symbol') or '?')}</a> <code>{c['mint']}</code>" for c in p["coins_created"][:5]))
     x = r["x"]
     if x.get("handle"):
         pr = x.get("profile") or {}

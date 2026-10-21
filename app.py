@@ -38,13 +38,14 @@ async def lookup(q: str, request: Request):
     dq.append(now)
     r = await identity.lookup(q)
     if r.get("error"): return JSONResponse(r, status_code=404)
-    _cache[q] = (now, r)
+    # A rate-limited coin fetch is not "zero coins". Don't pin that answer for five minutes.
+    if not (r.get("pump") or {}).get("coins_unavailable"): _cache[q] = (now, r)
     if len(_cache) > 500: _cache.pop(next(iter(_cache)))
     return r
 
 _act_hits = defaultdict(deque)
 ACT_RATE = int(os.environ.get("ACTIVITY_RATE_PER_MIN", "6"))
-TYPES = {"tx", "transfers", "callouts", "theses", "pnl", "linked", "owner"}
+TYPES = {"tx", "transfers", "callouts", "theses", "pnl", "linked", "owner", "nfts"}
 
 @app.get("/api/activity")
 async def api_activity(q: str, request: Request, type: str = "tx", limit: int = 50, before: float | None = None):
