@@ -3,180 +3,358 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#07060b;--card:rgba(16,14,26,.62);--line:rgba(255,255,255,.1);--mut:#9b97ad;--txt:#f5f2fb;--acc:#ff7a1a;--acc2:#ff3d8a;--cyan:#3ee0ff;--ok:#3dff9a;--warn:#ffc14d}
+:root{--bg:#07060b;--card:rgba(16,14,26,.62);--line:rgba(255,255,255,.1);--mut:#9b97ad;--txt:#f5f2fb;--acc:#ff7a1a;--acc2:#ff3d8a;--cyan:#3ee0ff;--ok:#3dff9a;--warn:#ffc14d;--blue:#7ec8ff;--pump:#5FCB88;--ink:#12352c}
 *{box-sizing:border-box}html{scroll-behavior:smooth}
 body{margin:0;min-height:100vh;display:flex;flex-direction:column;overflow-x:clip;color:var(--txt);font:15px/1.5 Outfit,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;background:#07060b}
 .aurora,.mesh{position:fixed;inset:0;pointer-events:none}
-.aurora{background:radial-gradient(900px 520px at 88% -8%,rgba(255,61,138,.32),transparent 58%),radial-gradient(760px 480px at -8% 8%,rgba(255,122,26,.26),transparent 52%),radial-gradient(680px 420px at 55% 115%,rgba(62,224,255,.14),transparent 55%)}
-.mesh{background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:72px 72px;mask-image:radial-gradient(ellipse at 50% 18%,#000 12%,transparent 72%)}
-.wrap{position:relative;z-index:1;flex:1;width:100%;max-width:1040px;margin:0 auto;padding:42px 22px 28px}
-.hero{animation:rise .6s cubic-bezier(.16,1,.3,1) both}
-.eyebrow{display:inline-flex;align-items:center;gap:8px;margin:0 0 14px;color:var(--mut);font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase}
-.pulse{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 0 rgba(61,255,154,.7);animation:ping 2.2s ease-out infinite}
-h1{font-family:Syne,Outfit,sans-serif;font-weight:800;font-size:clamp(42px,7vw,68px);letter-spacing:-.045em;line-height:.92;margin:0 0 12px}
-h1 span{background:linear-gradient(105deg,#ffe08a,#ff7a1a 42%,#ff3d8a);-webkit-background-clip:text;background-clip:text;color:transparent}
-.sub{color:var(--mut);max-width:560px;margin:0 0 26px;font-size:16px}
-.search{display:flex;gap:8px;padding:7px;border-radius:20px;background:linear-gradient(180deg,rgba(22,18,34,.92),rgba(12,10,20,.92)) padding-box,linear-gradient(115deg,#ffb020,#ff5a1f 40%,#ff3d8a 72%,#3ee0ff) border-box;border:1.5px solid transparent;box-shadow:0 18px 70px rgba(255,61,138,.16),inset 0 1px 0 rgba(255,255,255,.08)}
-.search:focus-within{box-shadow:0 0 0 4px rgba(255,122,26,.16),0 18px 70px rgba(255,61,138,.22),inset 0 1px 0 rgba(255,255,255,.1)}
+.aurora{background:radial-gradient(720px 480px at 8% 12%,rgba(60,140,255,.28),transparent 62%),radial-gradient(720px 480px at 96% 8%,rgba(95,203,136,.2),transparent 60%)}
+.mesh{background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:72px 72px;mask-image:radial-gradient(ellipse at 50% 0%,#000 10%,transparent 75%)}
+.wrap{position:relative;z-index:1;flex:1;width:100%;max-width:1180px;margin:0 auto;padding:22px 18px 36px}
+.top{display:flex;align-items:center;gap:18px;margin-bottom:8px}
+.creditlink{display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--mut);text-decoration:none;flex:none}
+.creditlink:hover{color:var(--txt);text-decoration:none}
+.creditlink img.brand{width:128px;height:auto;display:block}
+.credit{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:700;letter-spacing:.16em;line-height:1;white-space:nowrap}
+.credit svg{width:12px;height:12px;fill:currentColor;flex:none}
+.search{flex:1;display:flex;gap:8px;padding:7px;border-radius:20px;background:linear-gradient(180deg,rgba(22,18,34,.92),rgba(12,10,20,.92)) padding-box,linear-gradient(115deg,#7ec8ff,#3a7bff 42%,#5FCB88) border-box;border:1.5px solid transparent;box-shadow:0 18px 70px rgba(60,140,255,.14),inset 0 1px 0 rgba(255,255,255,.08)}
+.search:focus-within{box-shadow:0 0 0 4px rgba(95,203,136,.16),0 18px 70px rgba(60,140,255,.2),inset 0 1px 0 rgba(255,255,255,.1)}
 .search input{flex:1;min-width:0;background:transparent;border:0;color:var(--txt);padding:14px 16px;font:15px/1.4 "JetBrains Mono",ui-monospace,Menlo,monospace;outline:none}
 .search input::placeholder{color:#6f6b80}
-.search button{border:0;border-radius:14px;padding:0 22px;font:700 15px/1 Outfit,sans-serif;color:#1a0c06;cursor:pointer;background:linear-gradient(100deg,#ffd27a,#ff7a1a 46%,#ff3d8a);box-shadow:0 8px 24px rgba(255,90,31,.35);transition:transform .18s ease,filter .18s ease}
-.search button:hover{transform:translateY(-1px) scale(1.03);filter:brightness(1.06)}
+.search button{border:0;border-radius:14px;padding:0 22px;font:700 15px/1 Outfit,sans-serif;color:#04210f;cursor:pointer;background:linear-gradient(100deg,#d8ffe8,#5FCB88);box-shadow:0 8px 24px rgba(95,203,136,.28);transition:transform .18s ease,filter .18s ease}
+.search button:hover{transform:translateY(-1px) scale(1.03);filter:brightness(1.05)}
 .search button:active{transform:scale(.98)}
-#st{color:var(--mut);min-height:1.2em;margin-top:16px}
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:18px}
-.card{min-width:0;background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.025));background-color:var(--card);border:1px solid var(--line);border-radius:22px;padding:18px 18px 16px;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 16px 40px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.08);animation:rise .55s cubic-bezier(.16,1,.3,1) both;transition:transform .22s ease,border-color .22s ease,box-shadow .22s ease}
-.card:nth-child(2){animation-delay:.04s}.card:nth-child(3){animation-delay:.08s}.card:nth-child(4){animation-delay:.12s}.card:nth-child(5){animation-delay:.16s}.card:nth-child(6){animation-delay:.2s}.card:nth-child(7){animation-delay:.24s}.card:nth-child(8){animation-delay:.28s}.card:nth-child(9){animation-delay:.32s}
-.card:hover{transform:translateY(-3px);border-color:rgba(255,122,26,.45);box-shadow:0 18px 48px rgba(0,0,0,.38),0 0 0 1px rgba(255,122,26,.12),inset 0 1px 0 rgba(255,255,255,.1)}
-.full{grid-column:1/-1}
+#st{color:var(--mut);min-height:1.2em;margin:10px 2px 12px}
+.split{display:grid;grid-template-columns:1fr 1fr;align-items:stretch;border-radius:28px;overflow:hidden;border:1px solid rgba(255,255,255,.1);box-shadow:0 24px 70px rgba(0,0,0,.35);min-height:calc(100vh - 150px)}
+.half{min-width:0;padding:22px 18px 28px}
+.half.fomo{color:#e7f3ff;border-right:1px solid rgba(255,255,255,.14);background-color:#071428;background-image:linear-gradient(rgba(126,200,255,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(126,200,255,.12) 1px,transparent 1px),radial-gradient(540px 300px at 72% 12%,rgba(70,150,255,.28),transparent 70%),linear-gradient(180deg,#0e2c52,#07111f);background-size:32px 32px,32px 32px,auto,auto}
+.half.caller{background:linear-gradient(180deg,#ffffff 0%,#f4fff8 100%);color:var(--ink)}
+.pane-brand{display:flex;align-items:center;gap:12px;margin:0 0 16px}
+.pane-brand h2{margin:0;font-family:Syne,Outfit,sans-serif;font-size:22px;letter-spacing:.14em;line-height:1}
+.pane-sub{margin:2px 0 0;font-size:12px;letter-spacing:.04em}
+.half.fomo .pane-sub{color:#9ec4ea}
+.half.caller .pane-sub{color:#5d7a70}
+.logo-chip{display:inline-flex;background:#1D3934;border-radius:12px;padding:5px}
+.logo-chip img,.pane-brand>.mark{width:34px;height:34px}
+.half.fomo .pane-brand>.mark{border-radius:8px}
+.steps{display:flex;flex-wrap:wrap;gap:6px;list-style:none;padding:0;margin:0 0 12px}
+.steps li{font-size:12px;font-weight:700;color:#8fb4d4;padding:4px 10px;border-radius:999px;border:1px solid rgba(126,200,255,.28);background:rgba(4,14,30,.35)}
+.steps li.on{color:#f4fbff;background:rgba(70,150,255,.28);border-color:#8ec8ff}
+.steps li.done{color:#b8ffd8;border-color:rgba(95,203,136,.5)}
+.steps li.done::before{content:'✓ '}
+.pin-card{display:flex;gap:14px;align-items:center;padding:14px;border-radius:22px;margin:0 0 12px;background:rgba(4,12,28,.62);border:1px solid rgba(126,200,255,.38);box-shadow:0 16px 36px rgba(0,0,0,.28)}
+.pin-main{min-width:0;flex:1}
+.pinwrap{position:relative;width:74px;height:84px;flex:none}
+.radar{position:absolute;left:50%;top:8px;width:84px;height:84px;margin-left:-42px;border-radius:50%;background:conic-gradient(from 0deg,transparent 0 64%,rgba(142,200,255,.72));animation:sweep 2.4s linear infinite;pointer-events:none}
+.pinwrap:not(.scanning) .radar{display:none}
+.pin{width:48px;height:48px;margin:14px auto 0;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:linear-gradient(180deg,#b9dcff,#2f7fe0);display:grid;place-items:center;box-shadow:0 10px 18px rgba(0,0,0,.35);animation:bob 1.8s ease-in-out infinite}
+.pinwrap:not(.scanning) .pin{animation:none}
+.pin img{width:26px;height:26px;border-radius:6px;transform:rotate(45deg)}
+@keyframes sweep{to{transform:rotate(1turn)}}
+@keyframes bob{50%{translate:0 -5px}}
+.pin-actions{margin-top:8px}
+.leg{margin:4px 0 12px}
+.stop{display:flex;gap:10px;align-items:center;min-width:0}
+.stop b{overflow-wrap:anywhere}
+.marker{width:12px;height:12px;border-radius:50%;background:#8ec8ff;box-shadow:0 0 0 4px rgba(142,200,255,.22);flex:none}
+.marker.pinmark{width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;background:#12325c;box-shadow:0 0 0 4px rgba(142,200,255,.18)}
+.marker.pinmark img{width:16px;height:16px;border-radius:4px}
+.road{display:flex;align-items:center;gap:8px;min-height:28px;margin-left:5px}
+.road-line{width:2px;height:26px;margin-left:4px;background:repeating-linear-gradient(#8ec8ff 0 6px,transparent 6px 10px)}
+.dist{font-weight:800;font-size:12px;letter-spacing:.04em;color:#e7f3ff;background:rgba(8,24,48,.82);border:1px solid rgba(126,200,255,.4);border-radius:999px;padding:2px 8px}
+.phone{position:relative;border-radius:36px;padding:26px 16px 18px;text-align:center;margin-bottom:16px}
+.half.fomo .phone{background:radial-gradient(120% 90% at 50% -20%,#1d4f8a,#07111f 58%);border:1px solid rgba(126,200,255,.35);box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 18px 40px rgba(0,0,0,.28)}
+.half.caller .phone{background:radial-gradient(120% 90% at 50% -20%,#e7fff2,#ffffff 55%);border:1px solid rgba(95,203,136,.55);box-shadow:inset 0 1px 0 #fff,0 16px 36px rgba(29,57,52,.1)}
+.ringwrap{position:relative;width:120px;height:120px;margin:0 auto 12px}
+.avatar{position:absolute;inset:16px;width:88px;height:88px;border-radius:50%;object-fit:cover;background:#0c1830;border:3px solid rgba(255,255,255,.85)}
+.half.caller .avatar{background:#e7f6ee;border-color:#fff}
+.ring{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(126,200,255,.75);animation:ring 2.6s ease-out infinite}
+.ring.r2{animation-delay:.9s}
+.half.caller .ring{border-color:rgba(95,203,136,.8)}
+@keyframes ring{0%{transform:scale(.62);opacity:.7}100%{transform:scale(1.12);opacity:0}}
+.cname{font-family:Syne,Outfit,sans-serif;font-weight:800;font-size:clamp(26px,3vw,34px);letter-spacing:-.03em;line-height:1.05;overflow-wrap:anywhere}
+.csub{margin-top:6px;font-size:14px;font-weight:600}
+.half.fomo .csub{color:#b7d7f5}
+.half.caller .csub{color:#3e6b58}
+.phone .addr{margin:10px auto 0}
+.cactions{display:flex;justify-content:center;gap:54px;margin:18px 0 36px}
+.round{position:relative;width:68px;height:68px;border-radius:50%;border:0;display:grid;place-items:center;cursor:pointer;text-decoration:none;box-shadow:0 10px 22px rgba(0,0,0,.18)}
+.round svg{width:28px;height:28px;display:block}
+.round.decline{background:#ff3b30;color:#fff}
+.round.decline svg{transform:rotate(135deg)}
+.round.accept{color:#04210f}
+.half.fomo .round.accept{background:#3ddc84}
+.half.caller .round.accept{background:var(--pump)}
+.round span{position:absolute;top:76px;left:50%;transform:translateX(-50%);width:96px;font:700 11px/1.25 Outfit,sans-serif;text-align:center}
+.half.fomo .round span{color:#d7ecff}
+.half.caller .round span{color:var(--ink)}
+.round:hover{transform:translateY(-2px);text-decoration:none}
+.round:focus-visible{outline:3px solid currentColor;outline-offset:3px}
+.card{min-width:0;background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.025));background-color:var(--card);border:1px solid var(--line);border-radius:22px;padding:16px;margin:0 0 12px;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 12px 32px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.06)}
+.half.fomo .card{background:rgba(6,16,32,.45);border-color:rgba(126,200,255,.2);color:#e7f3ff}
+.half.caller .card{background:#fff;border-color:rgba(95,203,136,.4);color:var(--ink);box-shadow:0 10px 28px rgba(29,57,52,.06)}
+.half .card:hover{transform:none}
 .k{display:flex;align-items:center;gap:8px;color:var(--mut);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
-.kt{color:var(--txt)}.src{margin-left:auto;font-size:10px;font-weight:500;letter-spacing:0;text-transform:none;color:#6d687c;text-align:right;max-width:46%}
-.hd{display:flex;gap:16px;align-items:center;min-width:0}.hd>div{min-width:0;flex:1}.av{width:68px;height:68px;border-radius:50%;object-fit:cover;border:2px solid transparent;background:linear-gradient(#111,#111) padding-box,linear-gradient(140deg,#ffb020,#ff3d8a) border-box;box-shadow:0 0 24px rgba(255,61,138,.25);flex:none}
-.big{font-family:Syne,Outfit,sans-serif;font-size:26px;font-weight:800;letter-spacing:-.03em;line-height:1.1;overflow-wrap:anywhere}
-code,.addr{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-size:12.5px;color:#ddd6f0;word-break:break-all;overflow-wrap:anywhere;max-width:100%}
-.addr{display:block;width:fit-content;max-width:100%;margin-top:4px;padding:3px 8px;border-radius:8px;background:rgba(0,0,0,.28);border:1px solid var(--line)}
+.kt{color:inherit}.src{margin-left:auto;font-size:10px;font-weight:500;letter-spacing:0;text-transform:none;text-align:right;max-width:46%}
+.half.fomo .src,.half.fomo .mut,.half.fomo .stat>span{color:#9ec4ea}
+.half.caller .src,.half.caller .mut,.half.caller .stat>span,.half.caller .call-m{color:#5d7a70}
+.mark{width:22px;height:22px;object-fit:contain;flex:none;display:block}
+.ico{width:15px;height:15px;object-fit:contain;flex:none;display:block}
+.ico.fomo,.mark.fomo{border-radius:5px}
+code,.addr{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-size:12.5px;word-break:break-all;overflow-wrap:anywhere;max-width:100%}
+.addr{display:block;width:fit-content;max-width:100%;padding:3px 8px;border-radius:8px;background:rgba(0,0,0,.28);border:1px solid var(--line);color:#ddd6f0}
+.half.fomo .addr,.half.fomo code{color:#d7ecff;background:rgba(0,0,0,.28);border-color:rgba(126,200,255,.2)}
+.half.caller .addr,.half.caller code{color:#1d3934;background:rgba(95,203,136,.12);border-color:rgba(95,203,136,.35)}
 a{color:var(--acc);text-decoration:none}a:hover{text-decoration:underline}
-.row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid rgba(255,255,255,.06);align-items:center}.row:first-of-type{border-top:0}
+.half.fomo a{color:var(--blue)}
+.half.caller a{color:#0f8a45}
+.row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid rgba(255,255,255,.06);align-items:center}
+.half.caller .row,.half.caller .call,.half.caller .lead,.half.caller .dev{border-color:rgba(18,53,44,.08)}
+.row:first-of-type{border-top:0}
 .row>*{min-width:0;max-width:100%}
 .row a{display:inline-flex;align-items:center;gap:6px;min-width:0}
-.row>span:first-child{color:var(--mut)}
-.badge{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;background:rgba(255,255,255,.045);border:1px solid var(--line);margin:3px 6px 3px 0;font-size:13px;font-weight:600;color:var(--txt);transition:transform .18s ease,border-color .18s ease,background .18s ease}
-a.badge:hover{text-decoration:none;transform:translateY(-1px);border-color:rgba(255,122,26,.6);background:rgba(255,122,26,.08)}
+.row>span:first-child{color:inherit;opacity:.75}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid var(--line);margin:3px 6px 3px 0;font-size:13px;font-weight:600;color:inherit}
+.half.caller .badge{background:rgba(95,203,136,.1);border-color:rgba(95,203,136,.35);color:var(--ink)}
+a.badge:hover{text-decoration:none}
 .badge.warn{color:var(--warn);border-color:rgba(255,193,77,.35)}
-.badge.ok{color:#04140c;background:linear-gradient(100deg,#e7fff2,#3dff9a);border-color:transparent;box-shadow:0 0 18px rgba(61,255,154,.28)}
-.badge.pos{color:#04140c;background:#3dff9a;border-color:transparent}
+.half.caller .badge.warn{color:#8a5a00}
+.badge.ok,.badge.pos{color:#04210f;background:var(--pump);border-color:transparent}
 .badge.neg{color:#2a0608;background:#ff8b96;border-color:transparent}
-.badge.neutral{color:var(--mut)}
-.ico{width:15px;height:15px;object-fit:contain;flex:none;display:block}
-.mark{width:22px;height:22px;object-fit:contain;flex:none;display:block;filter:drop-shadow(0 0 8px rgba(95,203,136,.25))}
-.ico.fomo,.mark.fomo{border-radius:5px;filter:none}
-.warn{color:var(--warn)}.mut{color:var(--mut)}.note{font-size:12px;margin-top:8px}
+.badge.neutral{opacity:.8}
 .links{display:flex;flex-wrap:wrap;gap:8px}
-.linkbtn{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.04);color:var(--txt);font-weight:600;font-size:13px;transition:transform .18s ease,border-color .18s ease,background .18s ease}
-.linkbtn:hover{text-decoration:none;transform:translateY(-2px);border-color:rgba(255,122,26,.55);background:rgba(255,122,26,.1)}
-.arr{color:var(--acc)}
-/* Reusable shells for later sections: tabs, stat tiles, scrollable activity. */
+.linkbtn{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.04);color:inherit;font-weight:600;font-size:13px}
+.half.caller .linkbtn{border-color:rgba(95,203,136,.45);background:#f6fbf8;color:var(--ink)}
+.half.fomo .linkbtn{border-color:rgba(126,200,255,.3);color:#e7f3ff}
+.linkbtn:hover{text-decoration:none}
+.note{font-size:12px;margin-top:8px}
 .tabs{display:flex;gap:4px;width:100%;max-width:100%;padding:4px;border-radius:14px;background:rgba(0,0,0,.28);border:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+.half.caller .tabs{background:#f3fbf6;border-color:rgba(95,203,136,.35)}
 .tabs::-webkit-scrollbar{display:none}
 .tab{flex:none;border:0;background:transparent;color:var(--mut);font:600 13px/1 Outfit,sans-serif;padding:8px 12px;border-radius:10px;cursor:pointer;white-space:nowrap}
 .card.calls .tab{flex:1;text-align:center}
-.tab[aria-selected="true"],.tab.active{color:#1a0c06;background:linear-gradient(100deg,#ffd27a,#ff7a1a 50%,#ff3d8a)}
-.tabpanel{margin-top:12px}
-.scroll{max-height:340px;overflow:auto;border-radius:14px;border:1px solid var(--line)}
+.tab[aria-selected="true"]{color:#04210f;background:linear-gradient(100deg,#d8ffe8,#5FCB88)}
+.half.fomo .tab[aria-selected="true"]{background:linear-gradient(100deg,#d7ecff,#7ec8ff)}
+.scroll{max-height:340px;overflow:auto;border-radius:14px;border:1px solid var(--line);padding:2px 10px;background:rgba(0,0,0,.22)}
+.half.caller .scroll{background:#f7fcf9;border-color:rgba(95,203,136,.35);color:var(--ink)}
+#calllist{max-height:420px}
 .statgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.statgrid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.sumrow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:12px}
 .stat{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:14px;padding:12px}
+.half.fomo .stat{background:rgba(126,200,255,.06);border-color:rgba(126,200,255,.18)}
+.half.caller .stat{background:rgba(95,203,136,.08);border-color:rgba(95,203,136,.28)}
 .stat b{display:block;margin-top:4px;font-family:Syne,Outfit,sans-serif;font-size:22px;letter-spacing:-.03em}
-.stat>span{color:var(--mut);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
-.stat.up{box-shadow:inset 0 0 0 1px rgba(61,255,154,.18)}
-.stat.down{box-shadow:inset 0 0 0 1px rgba(255,93,108,.2)}
-.stat.up b{color:var(--ok)}.stat.down b{color:#ff5d6c}
-.stat .meta{margin-top:4px;color:var(--mut);font-size:12px;line-height:1.35}
-.stat .badge{margin-top:8px;letter-spacing:0;text-transform:none;font-size:11px}
+.sumrow .stat b{font-size:20px}
+.stat .meta{margin-top:4px;font-size:12px;line-height:1.35}
+.stat.up b{color:#5dffa8}.half.caller .stat.up b{color:#0c8a42}
+.stat.down b{color:#ff5d6c}
 .partial{color:var(--warn);font-style:normal}
-.buy{color:var(--ok);font-weight:800}.sell{color:#ff5d6c;font-weight:800}
+.buy{color:#5dffa8;font-weight:800}.half.caller .buy{color:#0c8a42}
+.sell{color:#ff5d6c;font-weight:800}
 .it{display:flex;gap:12px;justify-content:space-between;align-items:center;padding:10px 2px;border-bottom:1px solid rgba(255,255,255,.06);font-size:13.5px}
 .it .l{min-width:0}.it .r{flex:none;text-align:right;white-space:nowrap}
-.scroll{padding:2px 10px;background:rgba(0,0,0,.28)}
-.more{display:block;width:100%;margin-top:12px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--txt);border-radius:12px;padding:11px;font:700 13px Outfit,sans-serif;cursor:pointer;transition:border-color .18s,background .18s}
-.more:hover{border-color:rgba(255,122,26,.55);background:rgba(255,122,26,.1)}
-.card.act:hover,.card.hunch:hover,.card.calls:hover{transform:none}
-.card.hunch{border-color:rgba(255,193,77,.4);box-shadow:0 0 0 1px rgba(255,193,77,.14),0 16px 40px rgba(0,0,0,.28)}
+.more{display:block;width:100%;margin-top:12px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--txt);border-radius:12px;padding:11px;font:700 13px Outfit,sans-serif;cursor:pointer}
 .lead{padding:12px 0;border-top:1px solid rgba(255,255,255,.06)}.lead:first-child{border-top:0}
 .ev{display:flex;flex-direction:column;gap:8px;margin-top:8px}
-.evrow{display:flex;flex-direction:column;gap:6px;padding:8px 10px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.03);min-width:0}
+.evrow{display:flex;flex-direction:column;gap:6px;padding:8px 10px;border:1px solid rgba(126,200,255,.2);border-radius:12px;background:rgba(0,0,0,.18);min-width:0}
 .hintrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px}
 .who{font-family:Syne,Outfit,sans-serif;font-weight:800;font-size:20px;letter-spacing:-.03em}
 .conf{font-weight:800;letter-spacing:.08em;text-transform:uppercase;font-size:11px}
-.conf.high{color:var(--warn)}.conf.med{color:#ffb080}.conf.low{color:var(--mut)}
-.sumrow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:12px}
-.sumrow .stat b{font-size:20px}
+.conf.high{color:var(--warn)}.conf.med{color:#ffb080}.conf.low{color:#9ec4ea}
 .call{display:flex;gap:12px;padding:12px 2px;border-top:1px solid rgba(255,255,255,.06);min-width:0}
 .call>div{min-width:0;flex:1}
 .call:first-child{border-top:0}
 .cav{width:44px;height:44px;border-radius:12px;object-fit:cover;flex:none;background:#16141f;border:1px solid var(--line)}
-.cav.ph{display:inline-flex;align-items:center;justify-content:center}
+.half.caller .cav{background:#e7f6ee;border-color:rgba(95,203,136,.35)}
 .call-h{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 .call-h a{font-weight:800}
 .thesis{margin:6px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
-.call-m{display:flex;flex-wrap:wrap;gap:8px 12px;margin-top:6px;color:var(--mut);font-size:12px}
-.mx,.ath{display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:800;letter-spacing:.02em;border:1px solid var(--line)}
-.mx.up{color:#04140c;background:var(--ok);border-color:transparent}
+.call-m{display:flex;flex-wrap:wrap;gap:8px 12px;margin-top:6px;font-size:12px}
+.mx,.ath{display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:800;border:1px solid var(--line)}
+.mx.up{color:#04210f;background:var(--pump);border-color:transparent}
 .mx.dn{color:#2a0608;background:#ff8b96;border-color:transparent}
-.ath.hit{color:var(--ok);border-color:rgba(61,255,154,.45)}
-#calllist{max-height:460px}
-.tags{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;align-items:center}
-.foot{position:relative;z-index:1;padding:8px 16px 28px;text-align:center;border-top:1px solid rgba(255,255,255,.06)}
-.foot a{display:inline-flex;flex-direction:column;align-items:center;gap:8px;color:var(--mut);text-decoration:none}
-.foot a:hover{color:var(--txt);text-decoration:none}
-.foot img.brand{width:min(240px,70vw);height:auto;display:block}
-.credit{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:700;letter-spacing:.16em;line-height:1;white-space:nowrap}
-.credit svg{width:12px;height:12px;fill:currentColor;flex:none}
-.spin{display:inline-block;width:14px;height:14px;border:2px solid #444;border-top-color:var(--acc);border-radius:50%;animation:s .8s linear infinite;vertical-align:-2px;margin-right:8px}
+.ath.hit{color:#0c8a42;border-color:rgba(95,203,136,.7)}
+.half.fomo .ath.hit{color:#5dffa8}
+.dev{display:flex;gap:12px;align-items:center;padding:10px 0;border-top:1px solid rgba(18,53,44,.08);color:inherit;text-decoration:none;min-width:0}
+.dev:hover{text-decoration:none}
+.dev img{width:52px;height:52px;border-radius:14px;object-fit:cover;flex:none;background:#e7f6ee}
+.dev>div{min-width:0}
+.dev b{font-family:Syne,Outfit,sans-serif}
+.nft{display:flex;gap:12px;align-items:center;padding:10px 0;border-top:1px solid rgba(255,255,255,.06);color:inherit;text-decoration:none;min-width:0}
+.nft:first-of-type{border-top:0}
+.nft:hover{text-decoration:none}
+.nft img,.nft .ph{width:52px;height:52px;border-radius:12px;object-fit:cover;flex:none;background:#16141f}
+.nft>div{min-width:0;flex:1}
+.nft b{font-family:Syne,Outfit,sans-serif;overflow-wrap:anywhere}
+.nft .floor{font-weight:700}
+.empty{margin:8px 0;font-weight:700}
+.below{margin-top:16px}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid #444;border-top-color:var(--pump);border-radius:50%;animation:s .8s linear infinite;vertical-align:-2px;margin-right:8px}
+.half.fomo .spin{border-top-color:var(--blue)}
 @keyframes s{to{transform:rotate(360deg)}}
-@keyframes rise{from{opacity:0;translate:0 14px}to{opacity:1;translate:0 0}}
-@keyframes ping{0%{box-shadow:0 0 0 0 rgba(61,255,154,.55)}70%{box-shadow:0 0 0 8px rgba(61,255,154,0)}100%{box-shadow:0 0 0 0 rgba(61,255,154,0)}}
-@media(max-width:700px){
-.wrap{padding:28px 14px 16px}h1{font-size:40px}.sub{font-size:14.5px}
+@media(max-width:860px){
+.split{grid-template-columns:1fr;min-height:0}
+.half.fomo{border-right:0;border-bottom:1px solid rgba(255,255,255,.14)}
+.top{flex-direction:column;align-items:stretch}
+.creditlink{flex-direction:row;justify-content:center;gap:12px}
+.creditlink img.brand{width:92px}
 .search{flex-direction:column;padding:6px}.search button{padding:14px}
-.grid{grid-template-columns:1fr}.statgrid{grid-template-columns:repeat(2,minmax(0,1fr))}
-.card,.scroll,.tabs,.it,.row,.stat{min-width:0;max-width:100%}
-.row{flex-wrap:wrap;align-items:flex-start}.row code{font-size:11px}.hd{align-items:flex-start}.av{width:54px;height:54px}
+.statgrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.card,.scroll,.tabs,.it,.row,.stat,.phone{min-width:0;max-width:100%}
+.row{flex-wrap:wrap;align-items:flex-start}
 .it{flex-direction:column;align-items:flex-start;gap:4px}.it .r{white-space:normal;text-align:left}
-.tags{justify-content:flex-start}
-.src{max-width:42%}.foot{padding:4px 12px 22px}.credit{letter-spacing:.1em}
-.stat b,.sumrow .stat b{font-size:16px}
-.call{gap:8px}
+.cactions{gap:36px}
+.stat b,.sumrow .stat b{font-size:18px}
+.nft{align-items:flex-start}
 }
-@media(prefers-reduced-motion:reduce){*{animation:none!important;scroll-behavior:auto!important}.card:hover,.search button:hover,.linkbtn:hover,a.badge:hover{transform:none}}
+@media(max-width:860px){
+.pin-card{align-items:flex-start}
+.pin-actions{width:100%}
+}
+@media(prefers-reduced-motion:reduce){
+*{animation:none!important;scroll-behavior:auto!important}
+.ring,.radar,.pin{animation:none!important}
+.radar{opacity:.4}
+.ring{opacity:.45;transform:none}
+.round:hover,.search button:hover{transform:none}
+}
 </style></head><body>
 <div class="aurora" aria-hidden="true"></div><div class="mesh" aria-hidden="true"></div>
 <div class="wrap">
-<header class="hero">
-<p class="eyebrow"><span class="pulse" aria-hidden="true"></span>Solana identity</p>
-<h1>Fomo<span>Finder</span></h1>
-<p class="sub">Paste a Solana wallet, pump.fun profile link or username. Every fact links to its public source.</p>
+<header class="top">
+<a class="creditlink" href="https://x.com/Z00VIE" target="_blank" rel="noopener"><img class="brand" src="/static/goers.webp" alt="Goers &amp; Blowerz" width="400" height="233"><span class="credit"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.259-6.874L7.73 21.75H4.42l7.727-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>MADE BY @Z00VIE</span></a>
 <form id="f" class="search"><input id="q" placeholder="Solana wallet · pump.fun URL · username" autocomplete="off" enterkeyhint="search"><button type="submit">Look up</button></form>
 </header>
 <div id="st" role="status"></div><div id="out"></div>
 </div>
-<footer class="foot"><a href="https://x.com/Z00VIE" target="_blank" rel="noopener"><img class="brand" src="/static/goers.webp" alt="Goers &amp; Blowerz" width="400" height="233"><span class="credit"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.259-6.874L7.73 21.75H4.42l7.727-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>MADE BY @Z00VIE</span></a></footer>
 <script>
 const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const usd=v=>v==null?'':'$'+Number(v).toLocaleString(undefined,{maximumFractionDigits:0});
 const day=t=>t?new Date(t*1000).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}):'?';
-const brandOf=n=>{const s=String(n||'').toLowerCase();return s.includes('pump.fun')?'pump':s.includes('fomo')?'fomo':''};
 const icon=kind=>kind==='pump'?'/static/pump-logomark.svg':kind==='fomo'?'/static/fomo-icon.png':'';
 const img=(kind,cls)=>icon(kind)?`<img class="${cls}${kind==='fomo'?' fomo':''}" src="${icon(kind)}" alt="">`:'';
-const card=(title,src,body,cls='',brand='')=>`<article class="card ${cls}"><div class="k">${img(brand,'mark')}<span class="kt">${title}</span><span class="src">${esc(src||'')}</span></div>${body}</article>`;
-const badge=n=>{const s=String(n),b=brandOf(s),cls=s.includes('unverified')?' warn':/on-chain|verified/.test(s)?' ok':'';return `<span class="badge${cls}">${img(b,'ico')}${esc(s)}</span>`};
+const card=(title,src,body,cls='',brand='')=>`<article class="card ${cls}"><div class="k">${img(brand,'mark')}<span class="kt">${title}</span>${src?`<span class="src">${esc(src)}</span>`:''}</div>${body}</article>`;
 const ext=href=>`href="${esc(href)}" target="_blank" rel="noopener"`;
-const linkbtn=(name,url)=>`<a class="linkbtn" ${ext(url)}>${img(brandOf(name),'ico')}${esc(name)} <span class="arr">↗</span></a>`;
-async function go(q){$('#st').innerHTML='<span class=spin></span>Looking up… (busy wallets can take ~20s)';$('#out').innerHTML='';history.replaceState(null,'','?q='+encodeURIComponent(q));document.title='FomoFinder · '+q.slice(0,8);
+const linkbtn=(name,url)=>`<a class="linkbtn" ${ext(url)}>${esc(name)} ↗</a>`;
+const HAND='<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6.6 10.8a15 15 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.3 12 12 0 0 0 3.6.6 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1C10.6 21 3 13.4 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1 12 12 0 0 0 .6 3.6 1 1 0 0 1-.3 1L6.6 10.8z"/></svg>';
+function phone(o){
+ const av=o.image?`<img class="avatar" src="${esc(o.image)}" alt="" referrerpolicy="no-referrer">`:`<img class="avatar" src="${o.fallback}" alt="">`;
+ return `<article class="phone"><div class="ringwrap">${av}<span class="ring"></span><span class="ring r2"></span></div><div class="cname" id="${o.nameId}"${o.lock?' data-lock="1"':''}>${esc(o.name)}</div><div class="csub" id="${o.subId}">${esc(o.sub)}</div><code class="addr">${esc(o.wallet)}</code><div class="cactions"><button type="button" class="round decline" data-copy="1">${HAND}<span>Copy wallet</span></button><a class="round accept" ${ext(o.accept)}>${HAND}<span>${esc(o.acceptLabel)}</span></a></div></article>`;
+}
+async function copyWallet(e){
+ e.preventDefault();
+ const btn=e.currentTarget,label=btn.querySelector('span')||btn,prev=label.textContent;
+ try{await navigator.clipboard.writeText(CUR)}catch(err){
+  const ta=document.createElement('textarea');ta.value=CUR;document.body.appendChild(ta);ta.select();
+  try{document.execCommand('copy')}catch(e2){}
+  ta.remove();
+ }
+ label.textContent='Copied';setTimeout(()=>{label.textContent=prev},1400);
+}
+function steps(active){
+ const items=[['loc','Locating wallet…'],['search','Searching…'],['found','Found']];
+ const i=items.findIndex(x=>x[0]===active);
+ return `<ol class="steps" id="gps">${items.map(([s,l],idx)=>`<li data-s="${s}" class="${idx<i?'done':idx===i?'on':''}">${l}</li>`).join('')}</ol>`;
+}
+function pinCard(o){
+ return `<article class="pin-card"><div class="pinwrap scanning" id="pin"><span class="radar" aria-hidden="true"></span><span class="pin">${img('fomo','ico fomo')}</span></div><div class="pin-main"><div class="cname" id="fname"${o.lock?' data-lock="1"':''}>${esc(o.name)}</div><div class="csub" id="fsub">${esc(o.sub)}</div>${o.wallet?`<code class="addr">${esc(o.wallet)}</code><div class="links pin-actions"><button type="button" class="linkbtn" data-copy="1">Copy wallet</button><a class="linkbtn" ${ext(o.accept)}>Open Solscan ↗</a></div>`:''}</div></article>`;
+}
+function gps(step){
+ document.querySelectorAll('#gps li').forEach(li=>{
+  const order=['loc','search','found'],i=order.indexOf(step),j=order.indexOf(li.dataset.s);
+  li.classList.toggle('done',j<i);li.classList.toggle('on',j===i);
+ });
+ const pin=$('#pin');if(pin)pin.classList.toggle('scanning',step!=='found');
+}
+let GPS={owner:false,linked:false},ROUTES=[],LEADS=[];
+function gpsTick(){gps(GPS.owner&&GPS.linked?'found':'search');paintRoute()}
+function paintRoute(){
+ const el=$('#route');if(!el)return;
+ const target=CUR?CUR.slice(0,6):'Wallet';
+ const seen=new Set();
+ const stops=[];
+ for(const a of ROUTES){
+  const inn=Number(a.sol_in)||0,out=Number(a.sol_out)||0,sol=Math.max(inn,out);
+  if(sol<0.05||!a.wallet||seen.has(a.wallet))continue;
+  seen.add(a.wallet);
+  const lead=LEADS.find(c=>c.wallet===a.wallet);
+  stops.push({wallet:a.wallet,tag:a.wallet.slice(0,6),name:lead?.title||'',sol,dir:inn>=out?'in':'out'});
+ }
+ for(const c of LEADS){
+  if(!c.wallet||seen.has(c.wallet)||(Number(c.sol_in)||0)<0.05)continue;
+  seen.add(c.wallet);
+  stops.push({wallet:c.wallet,tag:c.wallet.slice(0,6),name:c.title||'',sol:Number(c.sol_in)||0,dir:'in'});
+ }
+ stops.sort((a,b)=>b.sol-a.sol);
+ if(!stops.length){el.innerHTML=GPS.owner&&GPS.linked?'<p class="mut">No route in the recent window.</p>':'<p class="mut"><span class=spin></span>Searching…</p>';return}
+ const stop=(tag,name,pin,href)=>`<div class="stop">${pin?`<span class="marker pinmark">${img('fomo','ico fomo')}</span>`:'<span class="marker"></span>'}<div><b>${href?`<a href="/?q=${encodeURIComponent(href)}">${esc(tag)}</a>`:esc(tag)}</b>${name?`<div class="mut">${esc(name)}</div>`:''}</div></div>`;
+ el.innerHTML=stops.slice(0,3).map(s=>{
+  const inbound=s.dir==='in';
+  const a=stop(inbound?s.tag:target,inbound?s.name:'this wallet',!inbound,inbound?s.wallet:null);
+  const b=stop(inbound?target:s.tag,inbound?'this wallet':s.name,inbound,inbound?null:s.wallet);
+  return `<div class="leg">${a}<div class="road"><span class="road-line" aria-hidden="true"></span><span class="dist">${s.sol.toFixed(2)} SOL</span></div>${b}</div>`;
+ }).join('');
+}
+async function go(q){$('#st').textContent='Locating wallet…';$('#out').innerHTML=`<div class="split"><section class="half fomo" aria-label="Fomo Finder"><div class="pane-brand">${img('fomo','mark fomo')}<div><h2>FOMO FINDER</h2><p class="pane-sub">Maps</p></div></div>${steps('loc')}${pinCard({name:'Locating wallet…',sub:'Searching the map'})}</section><section class="half caller" aria-label="Caller ID"><div class="pane-brand"><span class="logo-chip">${img('pump','mark')}</span><div><h2>CALLER ID</h2><p class="pane-sub">pump.fun</p></div></div><p class="mut">Incoming call… waiting for the lookup.</p></section></div>`;history.replaceState(null,'','?q='+encodeURIComponent(q));document.title='FomoFinder · '+q.slice(0,8);
  let r;try{r=await (await fetch('/api/lookup?q='+encodeURIComponent(q))).json()}catch(e){$('#st').textContent='Lookup failed, try again.';return}if(r.error||r.detail){$('#st').textContent=r.error||r.detail;return}$('#st').textContent='';
- const p=r.pump||{},x=r.x||{},d=r.domains||{},h=r.holdings||{},hi=r.history||{},f=r.fomo||{};let o='<div class="grid">';const k=r.kolscan||{};
- o+=card('Found on','',(r.found_on||[]).length?r.found_on.map(badge).join(''):'<span class="mut">No public identity found</span>','full');
- o+=card('Wallet','',`<div class="hd">${p.image?`<img class="av" src="${esc(p.image)}" alt="">`:''}<div><div class="big">${esc(p.username||d.primary||'Unknown wallet')}</div><code class="addr">${r.wallet}</code>${p.bio?`<div class="mut">${esc(p.bio)}</div>`:''}</div></div>`,'full');
- const noDirect=!(p.username||x.handle||(d.domains&&d.domains.length)||d.primary);
- if(noDirect)o+=card('Possible owner','unconfirmed · linked wallets','<div id="owner"><span class=spin></span>Checking funders and counterparties…</div>','full hunch');
- o+=card('Callouts & Theses','pump.fun','<div id="calls"><span class=spin></span>Loading callouts…</div>','full calls','pump');
- o+=card('pump.fun',r.pump?'frontend-api-v3.pump.fun':'',r.pump?`<div class="row"><span>Profile</span><a ${ext(p.link)}>${img('pump','ico')}${esc(p.username)}</a></div><div class="row"><span>Followers</span><b>${(p.followers||0).toLocaleString()}</b></div><div class="row"><span>Following</span><b>${(p.following||0).toLocaleString()}</b></div><div class="row"><span>Linked EVM</span><code>${esc(p.evm_wallet||'—')}</code></div><div class="row"><span>Coins created</span><b>${p.coins_created.length}</b></div>${p.coins_created.slice(0,5).map(c=>`<div class="row"><a ${ext(c.link)}>${img('pump','ico')}$${esc(c.symbol)}</a><code>${c.mint}</code></div>`).join('')}`:'<span class="mut">No pump.fun profile</span>','','pump');
- const xBody=(x.handle?`<div class="row"><span>Account</span><a ${ext(x.link)}>@${esc(x.handle)}</a></div>${x.profile?`<div class="row"><span>Followers</span><b>${x.profile.public_metrics.followers_count.toLocaleString()}</b></div>`:''}`:'<span class="mut">No linked X account</span>')
-  +`${(x.mentions||[]).map(m=>`<div class="row"><a ${ext(m.link)}>@${esc(m.handle)}</a><span class="mut">${esc(m.text.slice(0,60))}</span></div>`).join('')}<div class="row"><span>Posts mentioning wallet</span><a ${ext(x.search_link)}>search X ↗</a></div>${x.handle?`<div class="row"><span>Posts by/about @${esc(x.handle)}</span><a ${ext('https://x.com/search?q='+encodeURIComponent('@'+x.handle)+'&f=live')}>search X ↗</a></div>`:''}${x.note?`<div class="mut note">Live X search needs an API key on this server.</div>`:''}`;
- o+=card('X / Twitter',x.source,xBody);
- o+=card('KOLscan',`${k.tracked_kols||0} tracked KOLs`,k.is_kol?`<div class="row"><span>KOL</span><a ${ext(k.link)}>${esc(k.name)}</a></div>${k.twitter?`<div class="row"><span>X</span><a ${ext(k.twitter)}>${esc(k.twitter.split('/').pop())}</a></div>`:''}${Object.entries(k.stats||{}).map(([tf,s])=>`<div class="row"><span>${tf==='1'?'Today':tf+'d'}</span><b>#${s.rank} · ${s.profit_sol>=0?'+':''}${s.profit_sol.toFixed(1)} SOL · ${s.wins}W/${s.losses}L</b></div>`).join('')}`:`<span class="mut">Not a KOLscan-tracked wallet</span>${(k.same_x_handle_kol_wallets||[]).map(a=>`<div class="row"><span>KOL with same X handle</span><a ${ext(a.link)}>${esc(a.name)}</a></div>`).join('')}`);
- o+=card('Domains',d.source,d.domains&&d.domains.length?d.domains.map((n,i)=>`<a class="badge" ${ext(d.links[i])}>${esc(n)}${n===d.primary?' ★':''}</a>`).join(''):'<span class="mut">No .sol domains</span>');
- o+=card('Wallet age & funding','Solana RPC',hi.complete?`<div class="row"><span>First tx</span><a ${ext(hi.first_tx_link)}>${day(hi.first_seen)}</a></div><div class="row"><span>Transactions</span><b>${hi.tx_count}</b></div>${hi.first_fee_payer?`<div class="row"><span>Gas paid by</span><a ${ext(hi.first_fee_payer_link)}><code>${hi.first_fee_payer.slice(0,8)}…</code></a></div><div class="mut note">${esc(hi.funding_note)}</div>`:''}${hi.funded_by?`<div class="row"><span>Funded by</span><a ${ext(hi.funded_by_link)}><code>${hi.funded_by.slice(0,8)}…</code></a> ${hi.funded_sol.toFixed(3)} SOL</div>`:''}`:`<div class="row"><span>Active since at least</span><b>${day(hi.oldest_seen)}</b></div><div class="row"><span>Transactions</span><b>${(hi.tx_count_min||0).toLocaleString()}+</b></div><div class="mut note">Too many txs to reach the first one on a free RPC.</div>`);
- o+=card('Holdings','RPC + Jupiter',`<div class="row"><span>SOL</span><b>${h.sol==null?'?':h.sol.toFixed(3)} ${h.sol_usd?'<span class=mut>'+usd(h.sol_usd)+'</span>':''}</b></div><div class="row"><span>Tokens</span><b>${h.token_count}</b></div>${(h.top||[]).filter(t=>t.symbol).slice(0,5).map(t=>`<div class="row"><a ${ext(t.link)}>$${esc(t.symbol)}</a><span>${usd(t.usd)}</span></div>`).join('')}`);
- o+=card('Fomo',f.verified?'on-chain':'',fomoBody(f),'','fomo');
- o+=card('PnL (realized)','computed from recent swaps','<div id="pnl" class="mut"><span class=spin></span>Loading…</div>','full');
- o+=card('Linked wallets','transfers in recent txs','<div id="linked" class="mut"><span class=spin></span>Loading…</div>','full');
- o+=`<article class="card full act"><div class="k"><span class="kt">Activity</span><span class="src">latest 50 · scroll</span></div><div class="tabs" role="tablist">${[['tx','Swaps'],['transfers','Transfers'],['callouts','pump.fun callouts'],['theses','Fomo theses']].map(([k,l])=>`<button type="button" class="tab" role="tab" data-t="${k}" aria-selected="false">${l}</button>`).join('')}</div><div id="actbox" class="scroll" role="tabpanel"></div><button type="button" class="more" id="more" hidden>Load more</button></article>`;
- o+=card('Explore','',`<div class="links">${Object.entries(r.links).map(([name,url])=>linkbtn(name,url)).join('')}</div>`,'full');
- $('#out').innerHTML=o+'</div>';CUR=r.wallet;document.querySelectorAll('.act .tabs .tab').forEach(b=>b.onclick=()=>tab(b.dataset.t));$('#more').onclick=()=>tab(TAB,true);tab('tx');loadPnl();loadLinked();loadCalls();if(noDirect)loadOwner()}
+ const p=r.pump||{},x=r.x||{},d=r.domains||{},h=r.holdings||{},hi=r.history||{},f=r.fomo||{},k=r.kolscan||{};
+ CUR=r.wallet;GPS={owner:false,linked:false};ROUTES=[];LEADS=[];
+ const solscan='https://solscan.io/account/'+r.wallet;
+ const pumpLink=p.link||('https://pump.fun/profile/'+r.wallet);
+ const on=f.onchain||{};
+ const leftName=p.username||d.primary||sh(r.wallet);
+ const rightName=p.username||sh(r.wallet);
+ let o='<div class="split">';
+ o+=`<section class="half fomo" aria-label="Fomo Finder"><div class="pane-brand">${img('fomo','mark fomo')}<div><h2>FOMO FINDER</h2><p class="pane-sub">Maps · on-chain</p></div></div>`;
+ o+=steps('search');
+ o+=pinCard({name:leftName,sub:f.verified?'Fomo wallet':'Pinned location',wallet:r.wallet,accept:solscan,lock:!!(p.username||d.primary)});
+ o+=card('Route','waypoints','<div id="route"><p class="mut"><span class=spin></span>Searching…</p></div>');
+ o+=card('Fomo wallet',f.verified?'on-chain via signer':'',fomoStats(f),'','fomo');
+ o+=card('PnL','1D · 1W · 1M · 1Y','<div id="pnl"><span class=spin></span>Loading…</div>');
+ o+=card('Holdings','balance',`<div class="row"><span>SOL</span><b>${h.sol==null?'?':h.sol.toFixed(3)+' SOL'} ${h.sol_usd?'<span class=mut>'+usd(h.sol_usd)+'</span>':''}</b></div><div class="row"><span>Tokens</span><b>${h.token_count??0}</b></div>${(h.top||[]).filter(t=>t.symbol).slice(0,5).map(t=>`<div class="row"><a ${ext(t.link)}>$${esc(t.symbol)}</a><span>${usd(t.usd)}</span></div>`).join('')}`);
+ o+=card('Possible owner','unconfirmed','<div id="owner"><span class=spin></span>Checking funders and counterparties…</div>','hunch');
+ o+=card('Fomo theses','',`<p class="note">Fomo keeps theses private behind login. prod-api.fomo.family returns unauthorized without a session, so theses are not listed here.</p>${f.note?`<p class="mut note">${esc(f.note)}</p>`:''}`);
+ o+='</section>';
+ o+=`<section class="half caller" aria-label="Caller ID"><div class="pane-brand"><span class="logo-chip">${img('pump','mark')}</span><div><h2>CALLER ID</h2><p class="pane-sub">pump.fun</p></div></div>`;
+ o+=phone({nameId:'cname',subId:'csub',name:rightName,sub:'Incoming call… pump.fun',wallet:r.wallet,image:p.image,fallback:'/static/pump-logomark.svg',accept:pumpLink,acceptLabel:'View on pump.fun'});
+ o+=card('Profile',p.username?'pump.fun':'',p.username?`<div class="row"><span>Username</span><a ${ext(p.link)}>${esc(p.username)}</a></div><div class="row"><span>Followers</span><b>${(p.followers||0).toLocaleString()}</b></div><div class="row"><span>Following</span><b>${(p.following||0).toLocaleString()}</b></div>${p.bio?`<div class="note">${esc(p.bio)}</div>`:''}${p.evm_wallet?`<div class="row"><span>Linked EVM</span><code>${esc(p.evm_wallet)}</code></div>`:''}`:'<span class="mut">No pump.fun profile</span>','','pump');
+ o+=card('Callouts &amp; Theses','',`<div id="calls"><span class=spin></span>Loading callouts…</div>`,'calls','pump');
+ o+=card('Coins Devved','',devved(p),'','pump');
+ o+='</section></div>';
+ const xBody=(x.handle?`<div class="row"><span>Account</span><a ${ext(x.link)}>@${esc(x.handle)}</a></div>`:'<span class="mut">No linked X account</span>')+`<div class="row"><span>Posts mentioning wallet</span><a ${ext(x.search_link)}>search X ↗</a></div>${x.note?`<div class="mut note">Live X search needs an API key on this server.</div>`:''}`;
+ o+=`<div class="below">`;
+ o+=card('Also on file','',`<div class="links">${(r.found_on||[]).map(n=>`<span class="badge">${esc(n)}</span>`).join('')||'<span class="mut">No public identity</span>'}</div>${xBody}${d.domains&&d.domains.length?`<div class="row"><span>.sol</span><span>${d.domains.map((n,i)=>`<a class="badge" ${ext(d.links[i])}>${esc(n)}</a>`).join('')}</span></div>`:'<div class="row"><span>.sol</span><span class="mut">No .sol domains</span></div>'}${k.is_kol?`<div class="row"><span>KOLscan</span><a ${ext(k.link)}>${esc(k.name)}</a></div>`:'<div class="row"><span>KOLscan</span><span class="mut">Not tracked</span></div>'}${hi.complete?`<div class="row"><span>First tx</span><a ${ext(hi.first_tx_link)}>${day(hi.first_seen)}</a></div><div class="row"><span>Transactions</span><b>${hi.tx_count}</b></div>`:`<div class="row"><span>Active since at least</span><b>${day(hi.oldest_seen)}</b></div><div class="row"><span>Transactions</span><b>${(hi.tx_count_min||0).toLocaleString()}+</b></div>`}`);
+ o+=card('Linked wallets','',`<div id="linked"><span class=spin></span>Loading…</div>`);
+ o+=card('NFTs','Magic Eden · floor','<div id="nfts"><span class=spin></span>Loading…</div>','nfts');
+ o+=`<article class="card act"><div class="k"><span class="kt">Activity</span><span class="src">latest 50 · scroll</span></div><div class="tabs" role="tablist">${[['tx','Swaps'],['transfers','Transfers'],['callouts','pump.fun callouts'],['theses','Fomo theses']].map(([id,l])=>`<button type="button" class="tab" role="tab" data-t="${id}" aria-selected="false">${l}</button>`).join('')}</div><div id="actbox" class="scroll" role="tabpanel"></div><button type="button" class="more" id="more" hidden>Load more</button></article>`;
+ o+=card('Explore','',`<div class="links">${Object.entries(r.links||{}).map(([name,url])=>linkbtn(name,url)).join('')}</div>`);
+ o+='</div>';
+ $('#out').innerHTML=o;
+ document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=copyWallet);
+ document.querySelectorAll('.act .tabs .tab').forEach(b=>b.onclick=()=>tab(b.dataset.t));
+ $('#more').onclick=()=>tab(TAB,true);gps('search');tab('tx');loadPnl();loadLinked();loadCalls();loadOwner();loadNfts();
+}
+function fomoStats(f){
+ const on=f.onchain||{};
+ const yes=!!f.verified;
+ return `<div class="statgrid two"><div class="stat ${yes?'up':''}"><span>Detection</span><b>${yes?'On-chain':'Not seen'}</b><div class="meta">${yes?'Fomo fee payer co-signed':'no Fomo signer in the recent window'}</div></div><div class="stat"><span>Signed trades</span><b>${on.hits||0}</b><div class="meta">of the last ${on.checked_txs||0}</div></div></div>${on.signer?`<div class="row"><span>Signer</span><a ${ext(f.signer_link||('https://solscan.io/account/'+on.signer))}><code>${esc(on.signer)}</code></a></div>`:''}${fomoBody(f)}`;
+}
 function fomoBody(f){
- if(f.verified) return `<div class="row"><span>Fomo wallet</span><span class="badge ok">${img('fomo','ico')}✅ verified on-chain</span></div><div class="note">${esc(f.evidence)} · <a ${ext(f.example_link)}>example tx ↗</a> · <a ${ext(f.signer_link)}>signer ↗</a></div><div class="note">${esc(f.note)}</div>${f.guess_link?`<div class="row"><a class="linkbtn" ${ext(f.guess_link)}>${img('fomo','ico')}${esc(f.guess_link.replace('https://',''))}</a><span class="badge warn">⚠ handle unverified</span></div>`:''}`;
- if(f.guess_link) return `<a class="linkbtn" ${ext(f.guess_link)}>${img('fomo','ico')}${esc(f.guess_link.replace('https://',''))}</a> <span class="badge warn">⚠ unverified guess</span><div class="mut note">${esc(f.note)}</div>`;
+ if(f.verified) return `<div class="note">${esc(f.evidence||'')} · <a ${ext(f.example_link)}>example tx ↗</a></div><div class="note">${esc(f.note||'')}</div>${f.guess_link?`<div class="row"><a class="linkbtn" ${ext(f.guess_link)}>${esc(f.guess_link.replace('https://',''))}</a><span class="badge warn">handle unverified</span></div>`:''}`;
+ if(f.guess_link) return `<a class="linkbtn" ${ext(f.guess_link)}>${esc(f.guess_link.replace('https://',''))}</a> <span class="badge warn">unverified guess</span><div class="mut note">${esc(f.note||'')}</div>`;
  return `<span class="mut">${esc(f.note||'')}</span>`;
+}
+function devved(p){
+ const coins=p.coins_created||[];
+ if(p.coins_unavailable) return '<p class="empty">Coins could not be loaded. Try again.</p>';
+ const n=p.coins_devved!=null?p.coins_devved:coins.length;
+ const g=p.coins_graduated!=null?p.coins_graduated:coins.filter(c=>c.graduated).length;
+ if(!n) return '<p class="empty">No coins devved</p>';
+ return `<div class="sumrow"><div class="stat"><span>Coins devved</span><b>${n}</b></div><div class="stat ${g?'up':''}"><span>Graduated</span><b>${g}</b></div></div>${coins.map(c=>{
+  const pic=c.image?`<img src="${esc(c.image)}" alt="" referrerpolicy="no-referrer">`:`<img src="/static/pump-logomark.svg" alt="">`;
+  const state=c.graduated?'<span class="badge pos">Graduated</span>':'<span class="badge">Bonding</span>';
+  return `<a class="dev" ${ext(c.link)}>${pic}<div><b>$${esc(c.symbol||'?')}</b> <span class="mut">${esc(c.name||'')}</span><div class="meta">${day(c.created)} · MC ${mcapFmt(c.mcap)} · ATH ${mcapFmt(c.ath_mcap)} ${state}</div></div></a>`;
+ }).join('')}`;
 }
 let CUR=null,TAB='tx',BEFORE=null;
 const ago=t=>{if(!t)return'';const s=Date.now()/1000-t;return s<3600?Math.max(1,Math.round(s/60))+'m':s<86400?Math.round(s/3600)+'h':Math.round(s/86400)+'d'};
@@ -190,14 +368,14 @@ async function tab(t,more){
  let h='',last=null;
  if(t==='tx')(d.swaps||[]).forEach(s=>{last=s.ts;h+=`<div class="it"><span class="l"><b class="${s.side}">${esc(s.side.toUpperCase())}</b> <a ${ext('https://dexscreener.com/solana/'+s.mint)}>$${esc(s.symbol||sh(s.mint))}</a> <span class="mut">${esc(s.venue||'')}</span></span><span class="r">${usd(s.usd_est)} <span class="mut">${s.sol?s.sol.toFixed(2)+' SOL':''}</span> <a ${ext(s.link)}>${ago(s.ts)} ↗</a></span></div>`});
  if(t==='transfers')(d.transfers||[]).forEach(x=>{last=x.ts;const tok=String(x.token||'');h+=`<div class="it"><span class="l"><b class="${x.dir==='in'?'buy':'sell'}">${x.dir==='in'?'IN':'OUT'}</b> ${Number(x.amount).toLocaleString(undefined,{maximumFractionDigits:4})} ${esc(tok.length>10?sh(tok):tok)} ${x.dir==='in'?'from':'to'} <a ${ext('https://solscan.io/account/'+x.counterparty)}>${sh(x.counterparty)}</a></span><span class="r"><a ${ext(x.link)}>${ago(x.ts)} ↗</a></span></div>`});
- if(t==='callouts'){const it=(d.callouts||{}).items||[];it.forEach(c=>{h+=`<div class="it"><span class="l"><span class="badge">${img('pump','ico')}${esc(c.type)}</span> <a ${ext(c.link)}>${sh(c.mint)}</a> ${esc((c.text||'').slice(0,140))}</span><span class="r mut">${ago(c.ts)}</span></div>`});if(!it.length)h='<div class="mut" style="padding:12px 4px">No public pump.fun callouts or replies.</div>'}
+ if(t==='callouts'){const it=(d.callouts||{}).items||[];it.forEach(c=>{h+=`<div class="it"><span class="l"><span class="badge">${img('pump','ico')}${esc(c.type)}</span> <a ${ext(c.link)}>${c.symbol?'$'+esc(c.symbol):sh(c.mint)}</a> ${esc((c.text||'').slice(0,140))}</span><span class="r mut">${ago(c.ts)}</span></div>`});if(!it.length)h='<div class="mut" style="padding:12px 4px">No public pump.fun callouts or replies.</div>'}
  if(t==='theses')h=`<div class="mut" style="padding:12px 4px">${esc((d.theses||{}).note||'')}</div>`;
  if(!h)h='<div class="mut" style="padding:12px 4px">Nothing in the recent history window.</div>';
  if(more)box.insertAdjacentHTML('beforeend',h);else box.innerHTML=h;
  BEFORE=last;const moreBtn=$('#more');if(moreBtn)moreBtn.hidden=!(last&&(t==='tx'||t==='transfers'));
 }
 async function loadPnl(){
- const el=$('#pnl');let d;try{d=await api('pnl')}catch(e){el.textContent='PnL failed, try again.';return}
+ const el=$('#pnl');if(!el)return;let d;try{d=await api('pnl')}catch(e){el.textContent='PnL failed, try again.';return}
  if(d.error){el.textContent=d.error;return}
  const c=d.coverage||{};
  el.innerHTML=`<div class="statgrid">${Object.entries(d.pnl||{}).map(([k,p])=>{
@@ -214,7 +392,7 @@ function callRow(c){
  const cur=c.multiple==null?null:Number(c.multiple), peak=c.max_multiple==null?null:Number(c.max_multiple);
  const badge=cur==null?'':`<span class="mx ${cur>1?'up':cur<1?'dn':''}">${mult(cur)}</span>`;
  const ath=peak==null?'':`<span class="ath ${peak>=2?'hit':''}">ATH ${mult(peak)}</span>`;
- const pic=c.image?`<img class="cav" src="${esc(c.image)}" alt="" referrerpolicy="no-referrer">`:`<span class="cav ph">${img('pump','ico')}</span>`;
+ const pic=c.image?`<img class="cav" src="${esc(c.image)}" alt="" referrerpolicy="no-referrer">`:`<span class="cav">${img('pump','ico')}</span>`;
  const sym=c.symbol?`$${esc(c.symbol)}`:esc(sh(c.mint));
  const reply=c.type==='reply'&&c.to?`<span class="mut">reply to @${esc(c.to)}</span>`:'';
  return `<article class="call">${pic}<div><div class="call-h"><a ${ext(c.link)}>${sym}</a>${c.name?`<span class="mut">${esc(c.name)}</span>`:''}${reply}${badge}${ath}</div>${c.text?`<p class="thesis">${esc(c.text)}</p>`:''}<div class="call-m"><span>MC at call ${mcapFmt(c.mcap)}</span><span>${c.likes??0} likes</span><span>${ago(c.ts)||'?'}</span><a ${ext(c.link)}>coin ↗</a></div></div></article>`;
@@ -232,7 +410,7 @@ async function loadCalls(){
  const rate=calls.length?Math.round(100*hits/calls.length)+'%':'–';
  const bestMx=best&&best.max_multiple!=null?mult(best.max_multiple):'–';
  const bestName=best?(best.symbol?'$'+best.symbol:(best.name||sh(best.mint))):'';
- el.innerHTML=`<div class="sumrow"><div class="stat"><span>Callouts</span><b>${calls.length}</b></div><div class="stat"><span>Hit rate</span><b>${rate}</b><div class="meta">${hits} peaked ≥ 2x</div></div><div class="stat ${best&&best.max_multiple>=2?'up':''}"><span>Best call</span><b>${esc(bestMx)}</b><div class="meta">${esc(bestName)}${calls.length>=50?' · latest 50':''}</div></div></div><div class="tabs" role="tablist"><button type="button" class="tab" data-k="callout" aria-selected="true">Callouts${calls.length?' · '+calls.length:''}</button><button type="button" class="tab" data-k="reply" aria-selected="false">Replies${replies.length?' · '+replies.length:''}</button></div><div class="scroll" id="calllist"></div><div class="mut note">Fomo theses stay private behind login. These are pump.fun callouts only.</div>`;
+ el.innerHTML=`<div class="sumrow"><div class="stat"><span>Callouts</span><b>${calls.length}</b></div><div class="stat"><span>Hit rate</span><b>${rate}</b><div class="meta">${hits} peaked ≥ 2x</div></div><div class="stat ${best&&best.max_multiple>=2?'up':''}"><span>Best call</span><b>${esc(bestMx)}</b><div class="meta">${esc(bestName)}${calls.length>=50?' · latest 50':''}</div></div></div><div class="tabs" role="tablist"><button type="button" class="tab" data-k="callout" aria-selected="true">Callouts${calls.length?' · '+calls.length:''}</button><button type="button" class="tab" data-k="reply" aria-selected="false">Replies${replies.length?' · '+replies.length:''}</button></div><div class="scroll" id="calllist"></div>`;
  el.querySelectorAll('.tab').forEach(b=>b.onclick=()=>showCalls(b.dataset.k));
  showCalls('callout');
 }
@@ -241,35 +419,52 @@ function showCalls(kind){
  el.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-selected', b.dataset.k===kind?'true':'false'));
  const list=CALLS[kind]||[];
  const box=$('#calllist');
- box.innerHTML=list.length?list.map(callRow).join(''):`<div class="mut" style="padding:12px 4px">${kind==='reply'?'No replies on other callouts.':'No public pump.fun callouts.'}</div>`;
+ if(box) box.innerHTML=list.length?list.map(callRow).join(''):`<div class="mut" style="padding:12px 4px">${kind==='reply'?'No replies on other callouts.':'No public pump.fun callouts.'}</div>`;
 }
 async function loadOwner(){
- const el=$('#owner');if(!el)return;let d;try{d=await api('owner')}catch(e){el.textContent='Owner check failed, try again.';return}
- const o=d.owner||d;if(d.error){el.textContent=d.error;return}
- if(o.shown===false){el.innerHTML=`<span class="mut">${esc(o.reason||'This wallet already has a public identity.')}</span>`;return}
+ const el=$('#owner');if(!el)return;let d;try{d=await api('owner')}catch(e){el.textContent='Owner check failed, try again.';GPS.owner=true;gpsTick();return}
+ const o=d.owner||d;if(d.error){el.textContent=d.error;GPS.owner=true;gpsTick();return}
+ if(o.shown===false){el.innerHTML=`<span class="mut">${esc(o.reason||'This wallet already has a public identity.')}</span>`;LEADS=[];GPS.owner=true;gpsTick();return}
  const cs=o.candidates||[];
+ const name=$('#fname');
+ LEADS=cs;GPS.owner=true;gpsTick();
+ if(name&&!name.dataset.lock&&cs[0]){name.textContent=cs[0].title;const sub=$('#fsub');if(sub)sub.textContent='Pinned · unconfirmed lead'}
  if(!cs.length){el.innerHTML=`<span class="mut">No unconfirmed lead in the recent transfer window.</span><div class="mut note">${esc(o.method||'')}</div>`;return}
  el.innerHTML=cs.map(c=>{
   const cls=c.confidence==='High'?'high':c.confidence==='Medium'?'med':'low';
   const links=[`<a class="linkbtn" ${ext(c.tx_link)}>Solscan tx ↗</a>`,`<a class="linkbtn" ${ext(c.wallet_link)}>Linked wallet ↗</a>`,`<a class="linkbtn" href="/?q=${encodeURIComponent(c.wallet)}">Open wallet</a>`];
-  if(c.pump)links.push(`<a class="linkbtn" ${ext(c.pump.link)}>${img('pump','ico')}${esc(c.pump.username)}</a>`);
+  if(c.pump)links.push(`<a class="linkbtn" ${ext(c.pump.link)}>${esc(c.pump.username)}</a>`);
   if(c.x)links.push(`<a class="linkbtn" ${ext(c.x.link)}>@${esc(c.x.handle)}</a>`);
   (c.domains||[]).forEach(n=>links.push(`<a class="badge" ${ext(n.link)}>${esc(n.name)}</a>`));
   if(c.kol)links.push(`<a class="badge" ${ext(c.kol.link)}>${esc(c.kol.name)}</a>`);
   if(c.fomo_tx_link)links.push(`<a class="linkbtn" ${ext(c.fomo_tx_link)}>Fomo collection tx ↗</a>`);
   const ev=(c.evidence||[]).map(e=>`<div class="evrow"><span>${esc(e.text)}</span><span class="links">${(e.links||[]).map(l=>`<a class="linkbtn" ${ext(l.link)}>${esc(l.label)} ↗</a>`).join('')}</span></div>`).join('');
   const hints=(c.hints||[]).map(h=>`<a class="badge" ${ext(h.link)} title="${esc(h.coin_name||'')}">Weak hint · @${esc(h.handle)} · $${esc(h.symbol||'?')}</a>`).join('');
-  return `<div class="lead"><div class="row"><span class="who">${esc(c.title)}</span><span class="badge warn">${esc(c.label)}</span></div><div class="note"><span class="conf ${cls}">${esc(c.confidence)} confidence</span> · ${c.hop===1?'direct counterparty':'two hops out'}</div><p class="note">${esc(c.reason)}</p>${ev?`<div class="ev">${ev}</div>`:''}${hints?`<div class="hintrow"><span class="mut">From coins they created. A weak hint, not proof.</span>${hints}</div>`:''}<div class="links">${links.join('')}</div></div>`;
+  return `<div class="lead"><div class="row"><span class="who">${esc(c.title)}</span><span class="badge warn">${esc(c.label)}</span></div><div class="note"><span class="conf ${cls}">${esc(c.confidence)} confidence</span> · ${c.hop===1?'direct counterparty':'two hops out'}</div><p class="note">${esc(c.reason)}</p>${ev?`<div class="ev">${ev}</div>`:''}${hints?`<div class="hintrow">${hints}</div>`:''}<div class="links">${links.join('')}</div></div>`;
  }).join('')+`<div class="mut note">${esc(o.method||'')} Based on the last ${o.txs_parsed||0} parsed transactions.</div>`;
 }
+const usd2=v=>v==null?'?':'$'+Number(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+const solN=v=>v==null?'?':Number(v).toLocaleString(undefined,{maximumFractionDigits:4})+' SOL';
+async function loadNfts(){
+ const el=$('#nfts');if(!el)return;let d;try{d=await api('nfts')}catch(e){el.textContent='NFT lookup failed, try again.';return}
+ const box=d.nfts||{};if(d.error){el.textContent=d.error;return}
+ if(box.error){el.textContent=box.error;return}
+ const list=box.items||[];
+ const note=`<p class="mut note">${esc(box.note||'Values are floor-based estimates (each NFT priced at its collection floor), not sale prices.')}</p>`;
+ if(!list.length){el.innerHTML=`<p class="empty">No NFTs over $25</p>${note}`;return}
+ el.innerHTML=`<div class="statgrid two"><div class="stat"><span>Over $25</span><b>${box.count??list.length}</b></div><div class="stat"><span>Floor value</span><b>${usd2(box.total_usd)}</b><div class="meta">${solN(box.total_sol)}</div></div></div>${list.map(n=>{
+  const pic=n.image?`<img src="${esc(n.image)}" alt="" referrerpolicy="no-referrer">`:`<span class="ph"></span>`;
+  return `<a class="nft" ${ext(n.link)}>${pic}<div><b>${esc(n.name)}</b><div class="mut">${esc(n.collection_name||n.collection||'')}</div><div class="floor">${solN(n.floor_sol)} · ${usd2(n.floor_usd)}</div></div></a>`;
+ }).join('')}${note}`;
+}
 async function loadLinked(){
- const el=$('#linked');let d;try{d=await api('linked')}catch(e){el.textContent='Linked wallets failed, try again.';return}
- if(d.error){el.textContent=d.error;return}
- const L=d.linked||[];if(!L.length){el.textContent='No direct transfers in the recent window.';return}
+ const el=$('#linked');if(!el)return;let d;try{d=await api('linked')}catch(e){el.textContent='Linked wallets failed, try again.';GPS.linked=true;gpsTick();return}
+ if(d.error){el.textContent=d.error;GPS.linked=true;gpsTick();return}
+ const L=d.linked||[];ROUTES=L;GPS.linked=true;gpsTick();if(!L.length){el.textContent='No direct transfers in the recent window.';return}
  el.innerHTML=L.map(a=>{
   const bits=[a.in?a.in+' in':'',a.out?a.out+' out':'',(a.sol_in+a.sol_out)?(a.sol_in+a.sol_out).toFixed(2)+' SOL':'',(a.usd_in+a.usd_out)?usd(a.usd_in+a.usd_out)+' USDC':''].filter(Boolean).join(' · ');
-  const tags=(a.label?`<span class="badge warn">${esc(a.label)}</span>`:'')+((a.identity||[]).map(t=>`<a class="badge" ${ext(t.link)} title="${esc(t.strength)}">${img(brandOf(t.label),'ico')}${esc(t.label)}</a>`).join('')||(a.label?'':'<span class="mut">no public identity</span>'));
-  return `<div class="row"><span><a href="/?q=${encodeURIComponent(a.wallet)}"><code>${sh(a.wallet)}</code></a> <span class="mut">${esc(bits)}</span></span><span class="tags">${tags} <a ${ext(a.first_tx_link)}>tx ↗</a></span></div>`;
+  const tags=(a.label?`<span class="badge warn">${esc(a.label)}</span>`:'')+((a.identity||[]).map(t=>`<a class="badge" ${ext(t.link)}>${esc(t.label)}</a>`).join('')||(a.label?'':'<span class="mut">no public identity</span>'));
+  return `<div class="row"><span><a href="/?q=${encodeURIComponent(a.wallet)}"><code>${sh(a.wallet)}</code></a> <span class="mut">${esc(bits)}</span></span><span class="links">${tags} <a ${ext(a.first_tx_link)}>tx ↗</a></span></div>`;
  }).join('');
 }
 $('#f').onsubmit=e=>{e.preventDefault();const q=$('#q').value.trim();if(q)go(q)};

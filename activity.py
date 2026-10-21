@@ -474,12 +474,132 @@ def _lead(wallet, ident, stats, score, conf, parts, hop, via, touch, evidence=No
     if hints: out["hints"] = hints
     return out
 
+ME = "https://api-mainnet.magiceden.dev"
+NFT_NOTE = "Values are floor-based estimates (each NFT priced at its collection floor), not sale prices."
+_floors = {}
+_me_lock = asyncio.Lock()
+_me_next = 0.0
+
+async def _me_get(s, url):
+    """Magic Eden public API. Space calls out so a wallet with many collections stays under the keyless rate limit."""
+    global _me_next
+    for attempt in range(3):
+        async with _me_lock:
+            wait = _me_next - time.time()
+            if wait > 0: await asyncio.sleep(wait)
+            _me_next = time.time() + 0.35
+        try:
+            async with s.get(url, timeout=aiohttp.ClientTimeout(total=8), headers={"Accept": "application/json"}) as r:
+                if r.status == 200: return await r.json(content_type=None)
+                if r.status == 429:
+                    await asyncio.sleep(1.2 * (attempt + 1))
+                    continue
+                return None
+        except Exception:
+            await asyncio.sleep(0.4 * (attempt + 1))
+    return None
+
+def _https_image(url):
+    if not url or not isinstance(url, str): return None
+    if url.startswith("ipfs://"): return "https://ipfs.io/ipfs/" + url[len("ipfs://"):]
+    return url if url.startswith("https://") or url.startswith("http://") else None
+
+def value_nfts(tokens, floors, sol_usd, min_usd=25):
+    """Price each NFT at its collection floor (lamports). Keep those worth more than min_usd. floors maps symbol -> lamports; a missing symbol was not priced."""
+    items = []
+    for t in tokens or []:
+        sym = t.get("collection")
+        mint = t.get("mintAddress")
+        if not sym or not mint or sym not in floors or floors[sym] is None: continue
+        sol = float(floors[sym]) / 1e9
+        usd = sol * float(sol_usd)
+        if usd <= min_usd: continue
+        items.append({"mint": mint, "name": t.get("name") or "NFT", "image": _https_image(t.get("image")),
+                      "collection": sym, "collection_name": t.get("collectionName") or sym,
+                      "floor_sol": round(sol, 4), "floor_usd": round(usd, 2),
+                      "link": f"https://magiceden.io/item-details/{mint}"})
+    items.sort(key=lambda i: (-i["floor_usd"], i["name"]))
+    return items
+
+async def _collection_floor(s, symbol):
+    now = time.time()
+    hit = _floors.get(symbol)
+    if hit and now - hit["t"] < (600 if hit["ok"] else 60): return hit["floor"], hit["ok"]
+    from urllib.parse import quote
+    d = await _me_get(s, f"{ME}/v2/collections/{quote(symbol)}/stats")
+    if not isinstance(d, dict):
+        _floors[symbol] = {"t": now, "floor": None, "ok": False}
+        return None, False
+    raw = d.get("floorPrice")
+    try: lamports = float(raw) if raw is not None else 0.0
+    except (TypeError, ValueError): lamports = 0.0
+    if len(_floors) > 2000:
+        for k in sorted(_floors, key=lambda k: _floors[k]["t"])[:500]: _floors.pop(k, None)
+    _floors[symbol] = {"t": now, "floor": lamports, "ok": True}
+    return lamports, True
+
+async def _wallet_nfts(s, w, cap=400):
+    from urllib.parse import quote
+    out, seen, hit_cap = [], set(), False
+    for offset in range(0, cap, 100):
+        batch = await _me_get(s, f"{ME}/v2/wallets/{quote(w)}/tokens?offset={offset}&limit=100")
+        if not isinstance(batch, list):
+            return (None, False) if not out else (out, True)
+        for t in batch:
+            mint = t.get("mintAddress") if isinstance(t, dict) else None
+            if not mint or mint in seen: continue
+            seen.add(mint); out.append(t)
+            if len(out) >= cap:
+                hit_cap = True
+                break
+        if hit_cap or len(batch) < 100: break
+    return out, hit_cap
+
+async def nft_holdings(s, w):
+    """NFTs this wallet holds, valued at the Magic Eden collection floor and kept only when that floor is over $25."""
+    try:
+        tokens, scan_partial = await _wallet_nfts(s, w)
+    except Exception:
+        return {"error": "NFT lookup failed, try again.", "items": [], "count": 0, "total_usd": None, "note": NFT_NOTE}
+    if tokens is None:
+        return {"error": "NFT lookup failed, try again.", "items": [], "count": 0, "total_usd": None, "note": NFT_NOTE}
+    sol_usd = await sol_price(s)
+    if not sol_usd:
+        return {"error": "Couldn't price SOL, so NFT values aren't shown.", "items": [], "count": 0, "total_usd": None, "note": NFT_NOTE}
+    symbols, seen = [], set()
+    for t in tokens:
+        sym = t.get("collection")
+        if sym and sym not in seen:
+            seen.add(sym); symbols.append(sym)
+    floors, failed = {}, False
+    deadline = time.monotonic() + 20
+    for sym in symbols:
+        hit = _floors.get(sym)
+        fresh = hit and time.time() - hit["t"] < (600 if hit["ok"] else 60)
+        if not fresh and time.monotonic() > deadline:
+            failed = True
+            break
+        lamports, ok = await _collection_floor(s, sym)
+        if not ok:
+            failed = True
+            continue
+        floors[sym] = lamports
+    items = value_nfts(tokens, floors, sol_usd)
+    partial = bool(scan_partial or failed)
+    note = NFT_NOTE + (" Some collections could not be priced in time." if partial else "")
+    return {"items": items, "count": len(items), "total_usd": round(sum(i["floor_usd"] for i in items), 2),
+            "total_sol": round(sum(i["floor_sol"] for i in items), 4), "sol_usd": sol_usd,
+            "checked": len(tokens), "partial": partial, "note": note}
+
 async def activity(w, kind="all", limit=50, before=None):
     timeout = 120 if kind == "owner" else 60
     async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=timeout), headers={"User-Agent": "Mozilla/5.0"}) as s:
         res = {"wallet": w}
         if kind == "owner":
             res["owner"] = await possible_owners(s, w)
+            return res
+        if kind == "nfts":
+            res["nfts"] = await nft_holdings(s, w)
             return res
         if kind in ("all", "tx", "transfers", "pnl", "linked", "fomo"):
             f = await fetch(s, w)
