@@ -201,9 +201,228 @@ def links(w, pump_user=None, x=None):
     if x: L["X"] = f"https://x.com/{x}"
     return L
 
+X_NOTE = "Unconfirmed matches can be wrong. A name that only looks the same is never marked confirmed."
+_X_HAND = re.compile(r"(?:https?://)?(?:www\.)?(?:x\.com|twitter\.com)/([A-Za-z0-9_]{1,15})", re.I)
+_CRYPTO = re.compile(r"pump\.fun|pumpfun|\bfomo\b|solana|memecoin|\bdegen\b|\bcrypto\b|\bweb3\b|\bnft\b|\$sol\b|\bca:|contract address", re.I)
+_fx_cache = {}
+
+def handle_variants(name):
+    """Exact handle, then digits/underscores stripped, then 0/O swaps. X handles are at most 15 characters."""
+    raw = re.sub(r"[^A-Za-z0-9_]", "", (name or "").strip().lstrip("@"))
+    if not raw: return []
+    seen, out = set(), []
+    def add(h):
+        h = re.sub(r"[^A-Za-z0-9_]", "", h or "")
+        key = h.lower()
+        if not (4 <= len(h) <= 15) or key in seen: return
+        seen.add(key); out.append(h)
+    add(raw)
+    stripped = re.sub(r"[\d_]", "", raw)
+    add(stripped)
+    for base in (raw, stripped):
+        add(base.replace("0", "O").replace("o", "O"))
+        add(base.replace("0", "o"))
+        add(re.sub(r"[\d_]", "", base.replace("0", "O")))
+    return out[:8]
+
+def _handles_in(text):
+    return {m.group(1).lower() for m in _X_HAND.finditer(text or "")}
+
+def _flat(*parts):
+    bits = []
+    for p in parts:
+        if isinstance(p, dict): bits += [p.get("url") or "", p.get("display_url") or ""]
+        elif p: bits.append(str(p))
+    return "\n".join(bits)
+
+def score_x_candidate(subject, user, variant, avatar_match=False, posts_hit=None):
+    """Label an X account found for a pump.fun / Fomo name. Confirmed requires hard proof."""
+    handle = (user or {}).get("screen_name") or ""
+    wallet = subject.get("wallet") or ""
+    query = subject.get("handle") or ""
+    bio = user.get("description") or ""
+    web = _flat(user.get("website"))
+    xblob = bio + "\n" + web
+    hard, soft, evidence = [], [], []
+    src = user.get("_source") or "fxtwitter"
+    if wallet and wallet in xblob:
+        hard.append({"text": "X bio or website contains wallet " + wallet + ".", "source": src})
+    pump_bits = [f"pump.fun/profile/{wallet}", f"pump.fun/{wallet}"]
+    if query: pump_bits.append(f"pump.fun/profile/{query}")
+    low = xblob.lower()
+    if any(b.lower() in low for b in pump_bits if b):
+        hard.append({"text": "X bio or website links to this pump.fun profile or wallet.", "source": src})
+    pump_bio = subject.get("pump_bio") or ""
+    if handle and handle.lower() in _handles_in(pump_bio):
+        hard.append({"text": "pump.fun bio links to https://x.com/" + handle + ".", "source": "pump.fun profile"})
+    x_user = (subject.get("x_username") or "")
+    if handle and x_user and x_user.lower() == handle.lower():
+        hard.append({"text": "pump.fun profile x_username is @" + handle + ".", "source": "pump.fun profile"})
+    if posts_hit:
+        hard.append({"text": "An X post from this account contains the wallet address.", "source": "X API v2"})
+    for c in subject.get("coins") or []:
+        if c.get("creator") and c.get("creator") != wallet: continue
+        link = c.get("twitter") or ""
+        if handle and handle.lower() in _handles_in(link):
+            sym = c.get("symbol") or "coin"
+            hard.append({"text": f"Coin ${sym} created by this wallet links to @{handle}.", "source": "pump.fun coin"})
+            break
+    exact = bool(handle) and handle.lower() == query.lower()
+    if exact: soft.append("exact handle")
+    elif handle:
+        evidence.append({"text": f"X @{handle} is a normalized variant of {query} (digits/underscores removed or 0/O swapped), not the exact name.", "source": src, "hard": False})
+    if avatar_match: soft.append("matching avatar")
+    if _CRYPTO.search(bio or ""): soft.append("crypto bio")
+    tweets = int(user.get("tweets") or 0)
+    active = (not user.get("protected")) and tweets >= 5
+    if active: soft.append("account active")
+    if exact: evidence.append({"text": "X handle matches " + query + " exactly.", "source": src, "hard": False})
+    if avatar_match: evidence.append({"text": "Profile photo matches the pump.fun avatar.", "source": "image hash", "hard": False})
+    if "crypto bio" in soft: evidence.append({"text": "X bio mentions crypto, pump.fun, or Fomo.", "source": src, "hard": False})
+    if active: evidence.append({"text": f"Account is active ({tweets} posts).", "source": src, "hard": False})
+    for h in hard: h["hard"] = True
+    evidence = hard + evidence
+    label = "Confirmed" if hard else ("Likely" if len(soft) >= 2 else "Possible")
+    if label == "Confirmed" and not hard: label = "Possible"
+    return {"wallet": wallet, "role": subject.get("role") or "target", "query": query,
+            "name_kind": subject.get("name_kind") or "pump.fun username", "handle": handle,
+            "link": user.get("url") or f"https://x.com/{handle}", "variant": None if exact else variant,
+            "label": label, "evidence": evidence, "soft": soft, "avatar": user.get("avatar_url"),
+            "source": src}
+
+async def _fx_user(s, handle):
+    key = handle.lower()
+    hit = _fx_cache.get(key)
+    if hit and time.time() - hit["t"] < 600: return hit["u"], hit["err"]
+    from urllib.parse import quote
+    user, err, not_found = None, None, False
+    for base, source in (("https://api.fxtwitter.com/", "fxtwitter"), ("https://api.vxtwitter.com/", "vxtwitter")):
+        try:
+            async with s.get(base + quote(handle), headers={"User-Agent": "Mozilla/5.0", "Accept": "application/json"},
+                             timeout=aiohttp.ClientTimeout(total=8)) as r:
+                if r.status == 404:
+                    not_found = True
+                    continue
+                if r.status == 429:
+                    err = "rate limited"; await asyncio.sleep(0.8); continue
+                if r.status != 200:
+                    err = f"{source} {r.status}"; continue
+                d = await r.json(content_type=None)
+            u = d.get("user") if isinstance(d, dict) else None
+            if isinstance(u, dict) and u.get("screen_name"):
+                u["_source"] = source
+                user, err = u, None
+                break
+        except Exception:
+            err = err or "lookup failed"
+        await asyncio.sleep(0.15)
+    # A 404 from either host means there is no account. A 403 from the other host is not a failure.
+    if not user and not_found: err = None
+    _fx_cache[key] = {"t": time.time(), "u": user, "err": err if not user else None}
+    if len(_fx_cache) > 500:
+        for k in sorted(_fx_cache, key=lambda k: _fx_cache[k]["t"])[:100]: _fx_cache.pop(k, None)
+    return user, (None if user else err)
+
+async def _ahash(s, url):
+    if not url or "default_profile" in url: return None
+    try:
+        async with s.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=aiohttp.ClientTimeout(total=8)) as r:
+            if r.status != 200: return None
+            data = await r.read()
+    except Exception:
+        return None
+    if not data: return None
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            "ffmpeg", "-v", "error", "-i", "pipe:0", "-frames:v", "1", "-vf", "scale=8:8,format=gray", "-f", "rawvideo", "pipe:1",
+            stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.DEVNULL)
+        out, _ = await asyncio.wait_for(proc.communicate(data), timeout=8)
+    except Exception:
+        return None
+    if not out or len(out) < 64: return None
+    pix = list(out[:64]); avg = sum(pix) / 64; bits = 0
+    for i, p in enumerate(pix):
+        if p >= avg: bits |= 1 << i
+    return bits
+
+def _hamming(a, b):
+    return (a ^ b).bit_count()
+
+async def _posts_have_wallet(s, handle, wallet):
+    tok = os.environ.get("X_BEARER_TOKEN")
+    if not tok or not handle or not wallet: return None
+    from urllib.parse import quote
+    q = quote(f'from:{handle} "{wallet}"')
+    try:
+        async with s.get(f"https://api.x.com/2/tweets/search/recent?query={q}&max_results=10",
+                         headers={"Authorization": f"Bearer {tok}", "User-Agent": "Mozilla/5.0"},
+                         timeout=aiohttp.ClientTimeout(total=8)) as r:
+            if r.status != 200: return False
+            d = await r.json(content_type=None)
+    except Exception:
+        return False
+    return bool(isinstance(d, dict) and d.get("data"))
+
+async def _creator_coins(s, w):
+    raw = await _get_retry(s, f"{PUMP}/coins?creator={w}&offset=0&limit=20&includeNsfw=true&sort=created_timestamp&order=DESC")
+    if not isinstance(raw, list): return []
+    return [c for c in raw if isinstance(c, dict) and c.get("creator") == w]
+
+async def x_matches_for(s, wallet, handle, role="target", name_kind="pump.fun username", pump=None, coins=None):
+    """Look up one pump.fun or Fomo name, plus normalized variants, and score every X account found."""
+    handle = (handle or "").strip().lstrip("@")
+    if not handle: return {"matches": [], "miss": None, "note": X_NOTE, "posts_searched": bool(os.environ.get("X_BEARER_TOKEN"))}
+    pump = pump if isinstance(pump, dict) else (await _get(s, f"{PUMP}/users/{wallet}") or {})
+    if not isinstance(pump, dict): pump = {}
+    if coins is None: coins = await _creator_coins(s, wallet)
+    subject = {"wallet": wallet, "handle": handle, "role": role, "name_kind": name_kind,
+               "pump_bio": pump.get("bio") or "", "x_username": pump.get("x_username") or "",
+               "coins": coins, "pump_image": pump.get("profile_image")}
+    variants = handle_variants(handle)
+    found, errors, checked = [], [], []
+    seen_ids = set()
+    pump_hash = None
+    for i, variant in enumerate(variants):
+        if i: await asyncio.sleep(0.2)
+        user, err = await _fx_user(s, variant)
+        checked.append(variant)
+        if err and not user: errors.append(err); continue
+        if not user: continue
+        uid = str(user.get("id") or user.get("screen_name")).lower()
+        if uid in seen_ids: continue
+        seen_ids.add(uid)
+        posts = await _posts_have_wallet(s, user.get("screen_name"), wallet)
+        avatar_match = False
+        if subject["pump_image"] and user.get("avatar_url"):
+            if pump_hash is None: pump_hash = await _ahash(s, subject["pump_image"])
+            xh = await _ahash(s, user.get("avatar_url"))
+            avatar_match = pump_hash is not None and xh is not None and _hamming(pump_hash, xh) <= 8
+        found.append(score_x_candidate(subject, user, variant, avatar_match, posts))
+    rank = {"Confirmed": 0, "Likely": 1, "Possible": 2}
+    found.sort(key=lambda m: (rank.get(m["label"], 9), 0 if not m.get("variant") else 1, m.get("handle") or ""))
+    miss = None
+    if not found:
+        miss = {"query": handle, "role": role, "name_kind": name_kind, "wallet": wallet,
+                "checked": checked, "error": errors[0] if errors and len(errors) == len(checked) else None}
+    return {"matches": found, "miss": miss, "note": X_NOTE, "posts_searched": bool(os.environ.get("X_BEARER_TOKEN"))}
+
+async def x_name_report(s, wallet):
+    """Name matches for this wallet's pump.fun username, which is also the only public Fomo-name guess."""
+    pump = await _get(s, f"{PUMP}/users/{wallet}")
+    pump = pump if isinstance(pump, dict) else {}
+    handle = pump.get("username")
+    if not handle:
+        return {"matches": [], "misses": [], "note": X_NOTE, "posts_searched": bool(os.environ.get("X_BEARER_TOKEN")),
+                "empty": "No pump.fun username or Fomo name on this wallet."}
+    coins = await _creator_coins(s, wallet)
+    rep = await x_matches_for(s, wallet, handle, "target", "pump.fun username · Fomo name guess", pump, coins)
+    return {"matches": rep["matches"], "misses": [rep["miss"]] if rep.get("miss") else [], "note": X_NOTE,
+            "posts_searched": rep["posts_searched"], "empty": None}
+
 async def enrich_linked(items):
     """Light identity tags for linked wallets (pump.fun profile/X, .sol, KOLscan). Max 6, sequential to stay rate-limit friendly."""
-    async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=20)) as s:
+    async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=45)) as s:
+        matched = 0
         for a in items[:6]:
             p = await _get(s, f"{PUMP}/users/{a['wallet']}")
             p = p if isinstance(p, dict) else {}
@@ -214,6 +433,10 @@ async def enrich_linked(items):
             for d in sns.get("domains") or []: tags.append({"label": d, "link": f"https://www.sns.id/domain/{d[:-4]}", "strength": "strong (owner-registered)"})
             if k.get("is_kol"): tags.append({"label": "KOL " + (k.get("name") or ""), "link": k.get("link"), "strength": "strong"})
             a["identity"] = tags
+            if p.get("username") and matched < 3:
+                matched += 1
+                try: a["x_match"] = await x_matches_for(s, a["wallet"], p["username"], "funder", "pump.fun username", p)
+                except Exception: a["x_match"] = None
     return items
 
 async def lookup(q):

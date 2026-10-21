@@ -1,5 +1,6 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>FomoFinder</title><meta name="description" content="FomoFinder: look up public info tied to a Solana wallet (pump.fun, X, .sol domains, holdings, wallet age)."><meta property="og:title" content="FomoFinder"><meta property="og:description" content="Look up public info tied to any Solana wallet."><meta name="twitter:title" content="FomoFinder"><meta name="application-name" content="FomoFinder"><meta name="theme-color" content="#07060b">
+<script>try{if(new URLSearchParams(location.search).get('q'))document.documentElement.classList.add('direct')}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <style>
@@ -211,16 +212,105 @@ a.badge:hover{text-decoration:none}
 .pin-card{align-items:flex-start}
 .pin-actions{width:100%}
 }
+.intro{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:18px 16px 22px;background:radial-gradient(900px 520px at 50% 0%,rgba(95,203,136,.18),transparent 55%),radial-gradient(700px 480px at 80% 100%,rgba(60,140,255,.22),transparent 52%),#07060b;transition:opacity .4s ease,transform .4s ease}
+html.direct .intro{display:none}
+html:not(.direct) .wrap{visibility:hidden}
+html:not(.direct) body{overflow:hidden}
+html.direct .wrap,body.ready .wrap{visibility:visible}
+body.ready{overflow-x:clip;overflow-y:auto}
+.intro.out{opacity:0;transform:scale(.96);pointer-events:none}
+.intro-top{display:flex;align-items:center;justify-content:space-between;width:min(420px,100%);gap:12px}
+.intro .creditlink{flex-direction:row;gap:10px}
+.intro .creditlink img.brand{width:96px}
+.skiplink{color:#d9d4e6;font:700 13px/1 Outfit,sans-serif;text-decoration:underline;text-underline-offset:3px;padding:8px}
+.skiplink:hover{color:#fff}
+.iphone{width:min(390px,100%);height:min(760px,calc(100dvh - 132px));background:#0a0a0c;border-radius:48px;padding:12px;box-shadow:0 30px 80px rgba(0,0,0,.55),inset 0 0 0 2px #2a2a2e;position:relative}
+.ios{position:relative;height:100%;border-radius:36px;overflow:hidden;background:radial-gradient(120% 80% at 50% -10%,#1f6a4c,#0c1c18 46%,#12121a 80%);color:#fff}
+.island{position:absolute;top:18px;left:50%;width:108px;height:28px;margin-left:-54px;border-radius:20px;background:#000;z-index:3}
+.stage{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;padding:62px 22px 22px;text-align:center;min-height:0}
+.entrystage{opacity:0;transform:translateY(28px);pointer-events:none;transition:opacity .45s ease,transform .45s ease}
+.ringstage{transition:opacity .4s ease,transform .45s ease}
+.iphone.answered .ringstage{opacity:0;transform:translateY(-40px);pointer-events:none}
+.iphone.answered .entrystage{opacity:1;transform:none;pointer-events:auto}
+.ios-clock{margin:6px 0 12px;font-weight:600;font-size:15px;letter-spacing:.04em;color:rgba(255,255,255,.82)}
+.intro .ringwrap{width:128px;height:128px;flex:none}
+.intro .avatar{inset:20px;width:auto;height:auto;background:#1D3934;padding:16px;object-fit:contain}
+.intro .ring{border-color:rgba(95,203,136,.85)}
+.ios-name{margin:10px 0 0;font-family:Syne,Outfit,sans-serif;font-weight:800;font-size:28px;letter-spacing:.06em;line-height:1.05}
+.ios-sub{margin:8px 0 0;color:rgba(255,255,255,.74);font-weight:600}
+.slide{position:relative;margin-top:auto;width:100%;height:64px;border-radius:999px;background:rgba(255,255,255,.14);touch-action:none;outline:none}
+.slide:focus-visible{box-shadow:0 0 0 3px #5FCB88}
+.slide-label{position:absolute;inset:0;display:grid;place-items:center;font-weight:700;letter-spacing:.12em;color:rgba(255,255,255,.8);pointer-events:none;opacity:calc(1 - var(--p, 0))}
+.knob{position:absolute;top:6px;left:6px;width:52px;height:52px;border-radius:50%;border:0;padding:0;background:#3ddc84;color:#04210f;display:grid;place-items:center;cursor:grab;box-shadow:0 8px 18px rgba(0,0,0,.28);transform:translateX(0);transition:transform .22s ease}
+.knob.drag{cursor:grabbing;transition:none}
+.knob svg{width:26px;height:26px}
+.answer-fallback{margin-top:12px;border:0;background:transparent;color:#b7f5d2;font:700 14px Outfit,sans-serif;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.answer-fallback:focus-visible{outline:3px solid #5FCB88;outline-offset:3px}
+.calltime{font-variant-numeric:tabular-nums;font-weight:700;letter-spacing:.14em;color:#b7f5d2;margin:4px 0 8px}
+.incall-form{width:100%;margin-top:18px;display:flex;flex-direction:column;gap:10px}
+.incall-form input{width:100%;border:0;border-radius:16px;padding:16px;font:15px/1.4 "JetBrains Mono",ui-monospace,Menlo,monospace;background:rgba(255,255,255,.12);color:#fff;outline:none}
+.incall-form input::placeholder{color:rgba(255,255,255,.55)}
+.incall-form input:focus{box-shadow:0 0 0 3px rgba(95,203,136,.5)}
+.incall-form button{border:0;border-radius:16px;padding:14px;font:700 16px Outfit,sans-serif;background:#5FCB88;color:#04210f;cursor:pointer}
+.incall-form button:focus-visible{outline:3px solid #fff;outline-offset:3px}
+.xitem{padding:10px 0;border-top:1px solid rgba(255,255,255,.08)}
+.xitem:first-child{border-top:0}
+.xhead{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.xev{margin:8px 0 0;padding:0;list-style:none}
+.xev li{padding:4px 0;overflow-wrap:anywhere}
+.xsrc{opacity:.75}
+@media(max-width:860px){
+.intro{padding:10px 10px 14px;gap:10px}
+.iphone{height:min(740px,calc(100dvh - 104px));border-radius:36px;padding:8px}
+.ios{border-radius:28px}
+.intro .creditlink img.brand{width:72px}
+.ios-name{font-size:22px}
+.stage{padding:54px 16px 16px}
+}
 @media(prefers-reduced-motion:reduce){
 *{animation:none!important;scroll-behavior:auto!important}
 .ring,.radar,.pin{animation:none!important}
 .radar{opacity:.4}
 .ring{opacity:.45;transform:none}
 .round:hover,.search button:hover{transform:none}
+.intro,.ringstage,.entrystage,.knob{transition:none!important}
 }
 </style></head><body>
 <div class="aurora" aria-hidden="true"></div><div class="mesh" aria-hidden="true"></div>
-<div class="wrap">
+<div class="intro" id="intro">
+<div class="intro-top">
+<a class="creditlink" href="https://x.com/Z00VIE" target="_blank" rel="noopener"><img class="brand" src="/static/goers.webp" alt="Goers &amp; Blowerz" width="400" height="233"><span class="credit"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.259-6.874L7.73 21.75H4.42l7.727-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>MADE BY @Z00VIE</span></a>
+<a class="skiplink" href="#lookup" id="skip">Skip</a>
+</div>
+<div class="iphone" id="iphone">
+<div class="island" aria-hidden="true"></div>
+<div class="ios" id="ios">
+<section class="stage ringstage" id="stage-ring" aria-label="Incoming call">
+<p class="ios-clock" id="ios-clock"></p>
+<div class="ringwrap"><img class="avatar" src="/static/pump-logomark.svg" alt=""><span class="ring"></span><span class="ring r2"></span></div>
+<h1 class="ios-name">UNKNOWN NUMBER</h1>
+<p class="ios-sub">incoming call…</p>
+<div class="slide" id="slide" role="slider" tabindex="0" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Slide to answer">
+<span class="slide-label">slide to answer</span>
+<button type="button" class="knob" id="knob" aria-hidden="true" tabindex="-1"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M6.6 10.8a15 15 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.3 12 12 0 0 0 3.6.6 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1C10.6 21 3 13.4 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1 12 12 0 0 0 .6 3.6 1 1 0 0 1-.3 1L6.6 10.8z"/></svg></button>
+</div>
+<button type="button" class="answer-fallback" id="answer">Answer</button>
+</section>
+<section class="stage entrystage" id="stage-entry" aria-label="Call connected" inert>
+<p class="calltime" id="calltime">0:01</p>
+<div class="ringwrap"><img class="avatar" src="/static/fomo-icon.png" alt=""></div>
+<h1 class="ios-name">FOMO FINDER</h1>
+<p class="ios-sub">on the line · who should we look up?</p>
+<form class="incall-form" id="incall">
+<label class="ios-sub" for="iq" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Wallet, pump.fun username, or URL</label>
+<input id="iq" placeholder="Solana wallet · pump.fun URL · username" autocomplete="off" enterkeyhint="search">
+<button type="submit">Look up</button>
+</form>
+</section>
+</div>
+</div>
+</div>
+<div class="wrap" id="lookup">
 <header class="top">
 <a class="creditlink" href="https://x.com/Z00VIE" target="_blank" rel="noopener"><img class="brand" src="/static/goers.webp" alt="Goers &amp; Blowerz" width="400" height="233"><span class="credit"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.259-6.874L7.73 21.75H4.42l7.727-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>MADE BY @Z00VIE</span></a>
 <form id="f" class="search"><input id="q" placeholder="Solana wallet · pump.fun URL · username" autocomplete="off" enterkeyhint="search"><button type="submit">Look up</button></form>
@@ -298,7 +388,7 @@ function paintRoute(){
 async function go(q){$('#st').textContent='Locating wallet…';$('#out').innerHTML=`<div class="split"><section class="half fomo" aria-label="Fomo Finder"><div class="pane-brand">${img('fomo','mark fomo')}<div><h2>FOMO FINDER</h2><p class="pane-sub">Maps</p></div></div>${steps('loc')}${pinCard({name:'Locating wallet…',sub:'Searching the map'})}</section><section class="half caller" aria-label="Caller ID"><div class="pane-brand"><span class="logo-chip">${img('pump','mark')}</span><div><h2>CALLER ID</h2><p class="pane-sub">pump.fun</p></div></div><p class="mut">Incoming call… waiting for the lookup.</p></section></div>`;history.replaceState(null,'','?q='+encodeURIComponent(q));document.title='FomoFinder · '+q.slice(0,8);
  let r;try{r=await (await fetch('/api/lookup?q='+encodeURIComponent(q))).json()}catch(e){$('#st').textContent='Lookup failed, try again.';return}if(r.error||r.detail){$('#st').textContent=r.error||r.detail;return}$('#st').textContent='';
  const p=r.pump||{},x=r.x||{},d=r.domains||{},h=r.holdings||{},hi=r.history||{},f=r.fomo||{},k=r.kolscan||{};
- CUR=r.wallet;GPS={owner:false,linked:false};ROUTES=[];LEADS=[];
+ CUR=r.wallet;GPS={owner:false,linked:false};ROUTES=[];LEADS=[];XFUND=[];XMISS=[];XREADY=false;XREP={matches:[],misses:[],note:'',posts_searched:false,empty:null};
  const solscan='https://solscan.io/account/'+r.wallet;
  const pumpLink=p.link||('https://pump.fun/profile/'+r.wallet);
  const on=f.onchain||{};
@@ -324,6 +414,7 @@ async function go(q){$('#st').textContent='Locating wallet…';$('#out').innerHT
  const xBody=(x.handle?`<div class="row"><span>Account</span><a ${ext(x.link)}>@${esc(x.handle)}</a></div>`:'<span class="mut">No linked X account</span>')+`<div class="row"><span>Posts mentioning wallet</span><a ${ext(x.search_link)}>search X ↗</a></div>${x.note?`<div class="mut note">Live X search needs an API key on this server.</div>`:''}`;
  o+=`<div class="below">`;
  o+=card('Also on file','',`<div class="links">${(r.found_on||[]).map(n=>`<span class="badge">${esc(n)}</span>`).join('')||'<span class="mut">No public identity</span>'}</div>${xBody}${d.domains&&d.domains.length?`<div class="row"><span>.sol</span><span>${d.domains.map((n,i)=>`<a class="badge" ${ext(d.links[i])}>${esc(n)}</a>`).join('')}</span></div>`:'<div class="row"><span>.sol</span><span class="mut">No .sol domains</span></div>'}${k.is_kol?`<div class="row"><span>KOLscan</span><a ${ext(k.link)}>${esc(k.name)}</a></div>`:'<div class="row"><span>KOLscan</span><span class="mut">Not tracked</span></div>'}${hi.complete?`<div class="row"><span>First tx</span><a ${ext(hi.first_tx_link)}>${day(hi.first_seen)}</a></div><div class="row"><span>Transactions</span><b>${hi.tx_count}</b></div>`:`<div class="row"><span>Active since at least</span><b>${day(hi.oldest_seen)}</b></div><div class="row"><span>Transactions</span><b>${(hi.tx_count_min||0).toLocaleString()}+</b></div>`}`);
+ o+=card('Name match on X','fxtwitter · pump.fun','<div id="xmatch"><span class=spin></span>Checking handles…</div>');
  o+=card('Linked wallets','',`<div id="linked"><span class=spin></span>Loading…</div>`);
  o+=card('NFTs','Magic Eden · floor','<div id="nfts"><span class=spin></span>Loading…</div>','nfts');
  o+=`<article class="card act"><div class="k"><span class="kt">Activity</span><span class="src">latest 50 · scroll</span></div><div class="tabs" role="tablist">${[['tx','Swaps'],['transfers','Transfers'],['callouts','pump.fun callouts'],['theses','Fomo theses']].map(([id,l])=>`<button type="button" class="tab" role="tab" data-t="${id}" aria-selected="false">${l}</button>`).join('')}</div><div id="actbox" class="scroll" role="tabpanel"></div><button type="button" class="more" id="more" hidden>Load more</button></article>`;
@@ -332,7 +423,7 @@ async function go(q){$('#st').textContent='Locating wallet…';$('#out').innerHT
  $('#out').innerHTML=o;
  document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=copyWallet);
  document.querySelectorAll('.act .tabs .tab').forEach(b=>b.onclick=()=>tab(b.dataset.t));
- $('#more').onclick=()=>tab(TAB,true);gps('search');tab('tx');loadPnl();loadLinked();loadCalls();loadOwner();loadNfts();
+ $('#more').onclick=()=>tab(TAB,true);gps('search');tab('tx');loadPnl();loadLinked();loadCalls();loadOwner();loadNfts();loadXMatch();
 }
 function fomoStats(f){
  const on=f.onchain||{};
@@ -427,7 +518,7 @@ async function loadOwner(){
  if(o.shown===false){el.innerHTML=`<span class="mut">${esc(o.reason||'This wallet already has a public identity.')}</span>`;LEADS=[];GPS.owner=true;gpsTick();return}
  const cs=o.candidates||[];
  const name=$('#fname');
- LEADS=cs;GPS.owner=true;gpsTick();
+ LEADS=cs;GPS.owner=true;gpsTick();takeFunderMatches(cs);
  if(name&&!name.dataset.lock&&cs[0]){name.textContent=cs[0].title;const sub=$('#fsub');if(sub)sub.textContent='Pinned · unconfirmed lead'}
  if(!cs.length){el.innerHTML=`<span class="mut">No unconfirmed lead in the recent transfer window.</span><div class="mut note">${esc(o.method||'')}</div>`;return}
  el.innerHTML=cs.map(c=>{
@@ -442,6 +533,44 @@ async function loadOwner(){
   const hints=(c.hints||[]).map(h=>`<a class="badge" ${ext(h.link)} title="${esc(h.coin_name||'')}">Weak hint · @${esc(h.handle)} · $${esc(h.symbol||'?')}</a>`).join('');
   return `<div class="lead"><div class="row"><span class="who">${esc(c.title)}</span><span class="badge warn">${esc(c.label)}</span></div><div class="note"><span class="conf ${cls}">${esc(c.confidence)} confidence</span> · ${c.hop===1?'direct counterparty':'two hops out'}</div><p class="note">${esc(c.reason)}</p>${ev?`<div class="ev">${ev}</div>`:''}${hints?`<div class="hintrow">${hints}</div>`:''}<div class="links">${links.join('')}</div></div>`;
  }).join('')+`<div class="mut note">${esc(o.method||'')} Based on the last ${o.txs_parsed||0} parsed transactions.</div>`;
+}
+let XREP={matches:[],misses:[],note:'',posts_searched:false,empty:null}, XFUND=[], XMISS=[], XREADY=false;
+function xBadge(label){const cls=label==='Confirmed'?'ok':label==='Likely'?'warn':'';return `<span class="badge ${cls}">${esc(label)}</span>`}
+function renderX(){
+ const el=$('#xmatch');if(!el||(!XREADY&&!XFUND.length&&!XMISS.length))return;
+ const seen=new Set(), matches=[];
+ for(const m of [...(XREP.matches||[]),...XFUND]){const k=(m.wallet||'')+'|'+(m.handle||'').toLowerCase()+'|'+(m.query||'').toLowerCase();if(seen.has(k))continue;seen.add(k);matches.push(m)}
+ const rank={Confirmed:0,Likely:1,Possible:2};
+ matches.sort((a,b)=>(rank[a.label]??9)-(rank[b.label]??9));
+ const mseen=new Set(), misses=[];
+ for(const m of [...(XREP.misses||[]),...XMISS]){if(!m)continue;const k=(m.wallet||'')+'|'+(m.query||'').toLowerCase();if(mseen.has(k))continue;mseen.add(k);misses.push(m)}
+ const posts=XREP.posts_searched?' Posts were searched with X_BEARER_TOKEN.':' Posts are searched only when X_BEARER_TOKEN is set.';
+ const note=`<p class="mut note">${esc(XREP.note||'Unconfirmed matches can be wrong. A name that only looks the same is never marked confirmed.')}${posts}</p>`;
+ const body=matches.map(m=>{
+  const ev=(m.evidence||[]).map(e=>`<li>${e.hard?'<b>Hard</b> · ':''}${esc(e.text)} <span class="xsrc">· ${esc(e.source||'')}</span></li>`).join('');
+  const who=m.role==='funder'?'Funder':'This wallet';
+  return `<article class="xitem"><div class="xhead">${xBadge(m.label)} <a ${ext(m.link)}>@${esc(m.handle)}</a><span class="mut">${esc(who)} · ${esc(m.name_kind||'')} ${esc(m.query||'')}</span></div>${ev?`<ul class="xev">${ev}</ul>`:''}</article>`;
+ }).join('')+misses.map(m=>{
+  if(m.error) return `<p class="xitem">X lookup failed for @${esc(m.query)}. Try again.</p>`;
+  const vars=(m.checked||[]).filter(h=>h.toLowerCase()!==String(m.query||'').toLowerCase());
+  return `<p class="xitem">No X account for @${esc(m.query)}${vars.length?` (also checked ${esc(vars.join(', '))})`:''}.</p>`;
+ }).join('')+(XREP.empty?`<p class="xitem">${esc(XREP.empty)}</p>`:'');
+ el.innerHTML=(body||'<p class="xitem">No names to match.</p>')+note;
+}
+function takeFunderMatches(list){
+ let add=false;
+ for(const row of list||[]){
+  const box=row.x_match;if(!box)continue;
+  for(const m of box.matches||[]){XFUND.push(m);add=true}
+  if(box.miss){XMISS.push(box.miss);add=true}
+ }
+ if(add)renderX();
+}
+async function loadXMatch(){
+ const el=$('#xmatch');if(!el)return;
+ let d;try{d=await api('xmatch')}catch(e){el.textContent='X name match failed, try again.';return}
+ if(d.error){el.textContent=d.error;return}
+ XREP=d.xmatch||{};XREADY=true;renderX();
 }
 const usd2=v=>v==null?'?':'$'+Number(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
 const solN=v=>v==null?'?':Number(v).toLocaleString(undefined,{maximumFractionDigits:4})+' SOL';
@@ -460,7 +589,7 @@ async function loadNfts(){
 async function loadLinked(){
  const el=$('#linked');if(!el)return;let d;try{d=await api('linked')}catch(e){el.textContent='Linked wallets failed, try again.';GPS.linked=true;gpsTick();return}
  if(d.error){el.textContent=d.error;GPS.linked=true;gpsTick();return}
- const L=d.linked||[];ROUTES=L;GPS.linked=true;gpsTick();if(!L.length){el.textContent='No direct transfers in the recent window.';return}
+ const L=d.linked||[];ROUTES=L;GPS.linked=true;gpsTick();takeFunderMatches(L);if(!L.length){el.textContent='No direct transfers in the recent window.';return}
  el.innerHTML=L.map(a=>{
   const bits=[a.in?a.in+' in':'',a.out?a.out+' out':'',(a.sol_in+a.sol_out)?(a.sol_in+a.sol_out).toFixed(2)+' SOL':'',(a.usd_in+a.usd_out)?usd(a.usd_in+a.usd_out)+' USDC':''].filter(Boolean).join(' · ');
   const tags=(a.label?`<span class="badge warn">${esc(a.label)}</span>`:'')+((a.identity||[]).map(t=>`<a class="badge" ${ext(t.link)}>${esc(t.label)}</a>`).join('')||(a.label?'':'<span class="mut">no public identity</span>'));
@@ -468,5 +597,71 @@ async function loadLinked(){
  }).join('');
 }
 $('#f').onsubmit=e=>{e.preventDefault();const q=$('#q').value.trim();if(q)go(q)};
-const q0=new URLSearchParams(location.search).get('q');if(q0){$('#q').value=q0;go(q0)}
+function initIntro(){
+ const slide=$('#slide'),knob=$('#knob'),reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+ let pos=0,drag=null,answered=false,timer=0;
+ const maxX=()=>Math.max(0,slide.clientWidth-knob.offsetWidth-12);
+ const paint=(x,anim)=>{
+  const max=maxX(); pos=Math.max(0,Math.min(x,max));
+  knob.style.transition=anim&&!reduced?'':'none';
+  knob.style.transform=`translateX(${pos}px)`;
+  const p=max?pos/max:0;
+  slide.style.setProperty('--p',p.toFixed(3));
+  slide.setAttribute('aria-valuenow',String(Math.round(p*100)));
+  return p>=0.82;
+ };
+ const clock=$('#ios-clock'); if(clock) clock.textContent=new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+ function answer(){
+  if(answered)return; answered=true; paint(maxX(),true); knob.classList.remove('drag');
+  $('#iphone').classList.add('answered');
+  $('#stage-ring').setAttribute('inert','');
+  $('#stage-entry').removeAttribute('inert');
+  const t0=Date.now();
+  const tick=()=>{const s=Math.max(1,Math.floor((Date.now()-t0)/1000)); $('#calltime').textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
+  tick(); timer=setInterval(tick,1000);
+  setTimeout(()=>{$('#iq').focus()}, reduced?0:460);
+ }
+ function leave(){
+  clearInterval(timer);
+  document.body.classList.add('ready');
+  const intro=$('#intro'); intro.classList.add('out');
+  const hide=()=>{intro.hidden=true};
+  if(reduced)hide(); else{intro.addEventListener('transitionend',hide,{once:true}); setTimeout(hide,700)}
+ }
+ slide.addEventListener('keydown',e=>{
+  if(answered)return;
+  const step=maxX()*0.25;
+  if(e.key==='ArrowRight'){e.preventDefault(); if(paint(pos+step,true))answer()}
+  else if(e.key==='ArrowLeft'){e.preventDefault(); paint(pos-step,true)}
+  else if(e.key==='Enter'||e.key===' '){e.preventDefault(); answer()}
+ });
+ knob.addEventListener('pointerdown',e=>{
+  if(answered||e.button>0)return;
+  drag={id:e.pointerId,x:e.clientX,origin:pos};
+  knob.classList.add('drag');
+  try{knob.setPointerCapture(e.pointerId)}catch(err){}
+ });
+ knob.addEventListener('pointermove',e=>{
+  if(!drag||drag.id!==e.pointerId)return;
+  if(paint(drag.origin+(e.clientX-drag.x),false)){drag=null; knob.classList.remove('drag'); answer()}
+ });
+ const end=e=>{
+  if(!drag||drag.id!==e.pointerId)return;
+  drag=null; knob.classList.remove('drag');
+  if(!answered)paint(0,true);
+ };
+ knob.addEventListener('pointerup',end);
+ knob.addEventListener('pointercancel',end);
+ $('#answer').addEventListener('click',answer);
+ $('#skip').addEventListener('click',e=>{e.preventDefault(); leave(); $('#q').focus()});
+ $('#incall').addEventListener('submit',e=>{
+  e.preventDefault();
+  const q=$('#iq').value.trim();
+  if(!q){$('#iq').focus(); return}
+  $('#q').value=q; leave(); go(q);
+ });
+}
+const q0=new URLSearchParams(location.search).get('q');
+if(q0){$('#q').value=q0;go(q0)}
+else initIntro();
 </script></body></html>

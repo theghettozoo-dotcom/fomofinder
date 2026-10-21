@@ -597,9 +597,19 @@ async def activity(w, kind="all", limit=50, before=None):
         res = {"wallet": w}
         if kind == "owner":
             res["owner"] = await possible_owners(s, w)
+            import identity as _id
+            for c in (res["owner"].get("candidates") or [])[:3]:
+                h = ((c.get("pump") or {}).get("username"))
+                if not h: continue
+                try: c["x_match"] = await _id.x_matches_for(s, c["wallet"], h, "funder", "pump.fun username")
+                except Exception: c["x_match"] = None
             return res
         if kind == "nfts":
             res["nfts"] = await nft_holdings(s, w)
+            return res
+        if kind == "xmatch":
+            import identity as _id
+            res["xmatch"] = await _id.x_name_report(s, w)
             return res
         if kind in ("all", "tx", "transfers", "pnl", "linked", "fomo"):
             f = await fetch(s, w)
